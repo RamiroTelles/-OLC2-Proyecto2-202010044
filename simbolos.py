@@ -15,13 +15,19 @@ class Simbolos(): #VALOR - NODO
         self.linea = linea
         self.columna = columna
 
+
 class TablaSimbolos():
 
-    def __init__(self, simbolos = {}, salida='',ambito='global'):
+    def __init__(self, simbolos = {},ambito='global'):
         self.simbolos = simbolos
-        self.salida = salida
+        
         self.listaErrores =[]
         self.ambito= ambito
+        self.temp=-1
+        self.label=-1
+        self.msg=-1
+        self.inst=""
+        self.Datos ="msgSalto: .byte 10 \n"
 
     def agregar(self, simbolo):
         self.simbolos[simbolo.id] = simbolo
@@ -38,6 +44,32 @@ class TablaSimbolos():
         else:
             self.simbolos[id].valor = valor
 
+    def getNextMsg(self):
+        self.msg+=1
+        return self.msg
+    
+    def getLastMsg(self):
+        return self.msg
+    
+    def getNextLabel(self):
+        self.label+=1
+        return self.label
+
+    def getLastLabel(self):
+        return self.label
+    
+    def getNextTemp(self,offset):
+        self.temp+=1
+        self.temp-=offset
+        if self.temp==7:
+            self.temp=0
+        return self.temp
+    
+    def getLastTemp(self):
+        return self.temp
+    
+
+
         
 
     def limpiar(self):
@@ -45,3 +77,22 @@ class TablaSimbolos():
         self.listaErrores.clear()
         self.simbolos.clear()
         self.ambito='global'
+        self.inst=""
+        self.Datos="msgSalto: .byte 10 \n"
+
+    def getSalida(self):
+        return f'''
+    .data
+          
+    {self.Datos}
+
+    .text
+    .globl main
+    main:
+
+    {self.inst}
+
+    li a7, 10    
+    ecall
+
+    '''

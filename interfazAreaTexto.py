@@ -15,6 +15,7 @@ from tkinter import ttk
 #from matplotlib.pyplot import text
 
 import interprete as inter
+import traductor as trad
 import gramatica as g
 from reportes import *
 
@@ -60,7 +61,7 @@ class interfazAreaTexto():
             print("Guardar Archivo")
 
         def analizar():
-            TS = inter.TablaSimbolos()
+            TS = trad.TablaSimbolos()
             texto =t_editor.get("1.0","end")
             #print(texto)
             instrucciones = g.parse(texto)
@@ -68,21 +69,21 @@ class interfazAreaTexto():
             #print(instrucciones)
             
             try:
-               inter.ejec_instrucciones(instrucciones,TS,False)
-               inter.ejec_instrucciones(instrucciones,TS)
+               
+               trad.ejec_instrucciones(instrucciones,TS)
             except Exception as e:
                print("Error",e)
-            inter.listaErrores.extend(g.listaErrores)
-            crearReporteErroes(inter.listaErrores)
-            crearReporteTablaSimbolos(inter.TSReporte)
+            trad.listaErrores.extend(g.listaErrores)
+            crearReporteErroes(trad.listaErrores)
+            crearReporteTablaSimbolos(trad.TSReporte)
 
             posicion_actual = t_console.index("insert")
 
             # Insertar el texto en la posición actual del cursor
-            t_console.insert(posicion_actual, inter.SalidaConsola)
+            t_console.insert("1.0", TS.getSalida())
             TS.limpiar()
-            inter.SalidaConsola=""
-            inter.listaErrores.clear()
+            
+            trad.listaErrores.clear()
             
 
         

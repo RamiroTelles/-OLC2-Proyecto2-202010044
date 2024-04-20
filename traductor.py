@@ -6,7 +6,7 @@ from errores import error
 import copy
 
 listaErrores =[]
-SalidaConsola = ""
+
 
 TSReporte = TablaSimbolos()
 
@@ -35,15 +35,40 @@ def ejec_instrucciones(instrucciones,TS,save=True):
         
 
 def ejec_Imprimir(inst,TS):
-    global SalidaConsola
-    SalidaConsola += "> "
+    
+    
     for exp in inst.lista:
 
         #print('>> ', ejec_expresion(exp,TS))
         result = ejec_expresion(exp,TS)
         
-        SalidaConsola += str(result)
-    SalidaConsola += "\n"
+
+        if isinstance(exp, ExpresionDobleComilla) :
+            TS.inst += f'''la a1, {result}
+                            la a0, {result}len
+                            lw a2, 0(a0)
+                            li a0, 1 
+                            li a7, 64 
+                            ecall\n'''
+        
+        #Luego Escribe salto de linea
+        TS.inst  += f'''la a1, msgSalto
+                        li a2,1
+                        li a0,1
+                        li a7,64
+                        ecall\n'''
+            
+        # elif isinstance(inst.cad, ExpresionID):
+        #     temporal = ts.generateTemporal()
+        #     ts.salida += f'''la t{temporal}, {exp}
+        #                     lw a0, 0(t{temporal})
+        #                     li a7, 1
+        #                     ecall\n'''
+        # elif isinstance(inst.cad, ExpresionEntero):
+        #     ts.salida += f'''la a0, {exp}
+        #                     li a7, 1
+        #                     ecall\n'''
+    
     
 
 def ejec_expresion(exp,TS):
@@ -52,7 +77,12 @@ def ejec_expresion(exp,TS):
     elif isinstance(exp,ExpresionRelacional):
         return resolver_expresionRelacional(exp,TS)
     elif isinstance(exp,ExpresionDobleComilla):
-        return exp.cad[1:len(exp.cad)-1]
+        msg = TS.getNextMsg()
+        cadena = exp.cad[1:len(exp.cad)-1]
+        TS.Datos+= f'msg{msg}len: .word {len(cadena)}\n'
+        TS.Datos+= f'msg{msg}: .asciz "{cadena}"\n'
+
+        return f'msg{msg}'
     elif isinstance(exp,ExpresionComillaSimple):
         return exp.cad[1:len(exp.cad)-1]
     elif isinstance(exp,ExpresionBoleana):
