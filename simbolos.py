@@ -61,13 +61,21 @@ class TablaSimbolos():
     def getNextTemp(self,offset):
         self.temp+=1
         self.temp-=offset
-        if self.temp==7:
+        if self.temp==17:
             self.temp=0
-        return self.temp
+
+        if self.temp>6:
+            return f's{self.temp-6}'
+        else:
+            return f't{self.temp}'
+    
+    
     
     def getLastTemp(self):
         return self.temp
     
+    def restoreTemp(self,num):
+        self.temp -=num
 
 
         

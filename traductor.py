@@ -137,15 +137,44 @@ def resolver_expresionAritmetica(expNum,TS):
         exp1 = ejec_expresion(expNum.exp1,TS)
         exp2 = ejec_expresion(expNum.exp2,TS)
 
-        if expNum.operador == OPERACION_ARITMETICA.MAS : return exp1 + exp2
-        if expNum.operador == OPERACION_ARITMETICA.MENOS : return exp1 - exp2
-        if expNum.operador == OPERACION_ARITMETICA.POR : return exp1 * exp2
-        if expNum.operador == OPERACION_ARITMETICA.DIVIDIDO : return exp1 / exp2
-        if expNum.operador == OPERACION_ARITMETICA.MODULO : return exp1 % exp2
+        if len(exp1) == 2 and len(exp2)==2 or len(exp1) == 3 and len(exp2)==3:
+            #Numeros o Caracteres o bool
+            if expNum.operador == OPERACION_ARITMETICA.MAS : 
+                temp= TS.getNextTemp(2)
+                TS.inst += f'add {temp},{exp1},{exp2}\n'
+                return temp
+            if expNum.operador == OPERACION_ARITMETICA.MENOS : 
+                temp= TS.getNextTemp(2)
+                TS.inst += f'sub {temp},{exp1},{exp2}\n'
+                return temp
+            if expNum.operador == OPERACION_ARITMETICA.POR : 
+                temp= TS.getNextTemp(2)
+                TS.inst += f'mul {temp},{exp1},{exp2}\n'
+                return temp
+            if expNum.operador == OPERACION_ARITMETICA.DIVIDIDO : 
+                temp= TS.getNextTemp(2)
+                TS.inst += f'div {temp},{exp1},{exp2}\n'
+                return temp
+            if expNum.operador == OPERACION_ARITMETICA.MODULO : 
+                temp= TS.getNextTemp(2)
+                TS.inst += f'rem {temp},{exp1},{exp2}\n'
+                return temp
     elif isinstance(expNum,ExpresionNegativa):
-        return -resolver_expresionAritmetica(expNum.exp1,TS)
+        exp1 = resolver_expresionAritmetica(expNum.exp1,TS)
+        temp= TS.getNextTemp(1)
+        
+        TS.inst += f'sub {temp},x0,{exp1}\n'
+       
+        return temp
+        
     elif isinstance(expNum,ExpresionEntero):
-        return expNum.exp1
+        
+        temp = TS.getNextTemp(0)
+        
+        TS.inst += f'addi {temp}, x0, {expNum.exp1}\n'
+
+        return temp
+        
     elif isinstance(expNum,ExpresionDecimal):
         return expNum.exp1
     
@@ -190,29 +219,14 @@ def resolver_expresionId(expId,TS):
 
 
 def ejec_declaracion_explicita(inst,TS):
+    cont=1
     exp = ejec_expresion(inst.valor,TS)
 
     if TS.obtener(inst.id)!=None:
         print("Ya declarada variable "+inst.id)
         listaErrores.append(error("Ya declarada variable "+inst.id,0,0,"Semantico"))
         #return
-    try:
-        if inst.arrayList ==0:
-
-            if inst.tipo==TIPOS_P.ENTERO:
-                exp= int(exp)
-            elif inst.tipo==TIPOS_P.FLOAT:
-                exp= float(exp)
-            elif inst.tipo==TIPOS_P.CADENA:
-                exp= str(exp)
-            elif inst.tipo==TIPOS_P.CHAR:
-                exp= str(exp)
-            elif inst.tipo==TIPOS_P.BOOLEAN:
-                exp= bool(exp)
-        
-    except:
-        print("Error, "+inst.id+" No se puede asignar un tipo de variable diferente")
-        listaErrores.append(error(inst.id+" No se puede asignar un tipo de variable diferente",0,0,"Semantico"))
+ 
 
     if inst.const == True:
         if exp==None:
@@ -227,8 +241,16 @@ def ejec_declaracion_explicita(inst,TS):
         simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.VARIABLE,tipo=inst.tipo,valor=exp,ambito=TS.ambito,linea=inst.linea,columna=inst.columna)
         
     TS.agregar(simbolo)
+    if inst.tipo == TIPOS_P.ENTERO:
+        TS.Datos += f'{inst.id}: .word 0\n'
+        if exp!= None:
+            cont+=1
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp},{inst.id}\n'
+            TS.inst += f'sw {exp},0({temp})\n'
     
-    TSReporte.agregar(copy.deepcopy(simbolo))
+    TS.restoreTemp(cont)
+ #   TSReporte.agregar(copy.deepcopy(simbolo))
 
 def ejec_declaracion_implicita(inst,TS):
     exp = ejec_expresion(inst.valor,TS)

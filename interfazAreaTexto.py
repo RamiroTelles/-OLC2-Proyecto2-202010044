@@ -77,9 +77,9 @@ class interfazAreaTexto():
             crearReporteErroes(trad.listaErrores)
             crearReporteTablaSimbolos(trad.TSReporte)
 
-            posicion_actual = t_console.index("insert")
-
+           
             # Insertar el texto en la posición actual del cursor
+            t_console.delete("1.0","end")
             t_console.insert("1.0", TS.getSalida())
             TS.limpiar()
             
