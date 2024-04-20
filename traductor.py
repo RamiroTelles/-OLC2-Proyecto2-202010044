@@ -90,6 +90,7 @@ def ejec_expresion(exp,TS):
     elif isinstance(exp,ExpresionTernaria):
         return resolver_expresionTernaria(exp,TS)
     elif isinstance(exp,ExpresionID):
+        
         return resolver_expresionId(exp,TS)
     elif isinstance(exp,call_func):
         tupla =ejec_Funcion(exp,TS)
@@ -215,7 +216,10 @@ def resolver_expresionId(expId,TS):
         listaErrores.append(error("Se quiere usar valor null con variable "+expId.id,0,0,"Semantico"))
         print("Se quiere usar valor null con variable "+expId.id)
         return
-    return exp_id.valor
+    temp = TS.getNextTemp(0)
+    TS.inst += f'la {temp}, {expId.id}\n'
+    TS.inst += f'lw {temp}, 0({temp})\n'
+    return temp
 
 
 def ejec_declaracion_explicita(inst,TS):
