@@ -12,6 +12,11 @@ from interfazAreaTexto import interfazAreaTexto
 if __name__ == '__main__':
 
     interfazAreaTexto()
+
+    #charr = '0'
+    
+    #uwu = ord(charr)
+    #print(uwu)
     # numero = 1
     # flotante =1.0
     # cadena = "hoa"

@@ -84,7 +84,13 @@ def ejec_expresion(exp,TS):
 
         return f'msg{msg}' , TIPOS_P.CADENA
     elif isinstance(exp,ExpresionComillaSimple):
-        return exp.cad[1:len(exp.cad)-1]
+        temp = TS.getNextTemp(0)
+        
+        TS.inst += f'addi {temp}, x0, {ord(exp.cad[1:len(exp.cad)-1])}\n'
+
+        return temp, TIPOS_P.CHAR
+
+        #return exp.cad[1:len(exp.cad)-1]
     elif isinstance(exp,ExpresionBoleana):
         return resolver_expresionBoleana(exp,TS)
     elif isinstance(exp,ExpresionTernaria):
@@ -163,6 +169,11 @@ def resolver_expresionAritmetica(expNum,TS):
                 TS.inst += f'beqz {exp2}, err_divisionZero\n'
                 TS.inst += f'rem {temp},{exp1},{exp2}\n'
                 return temp , TIPOS_P.ENTERO
+        else:
+            listaErrores.append(error("Tipos no combatibles "+str(tipo1)+str(tipo2),0,0,"Semantico"))
+            print("Tipos no combatibles "+str(tipo1)+str(tipo2))
+            
+            
     elif isinstance(expNum,ExpresionNegativa):
         exp1,tipo = resolver_expresionAritmetica(expNum.exp1,TS)
         temp= TS.getNextTemp(1)
@@ -205,8 +216,19 @@ def resolver_expresionBoleana(expBol,TS):
     elif isinstance(expBol,ExpresionNot):
         return not ejec_expresion(expBol.exp1,TS)
     elif isinstance(expBol,Expresion_True_False):
-        if expBol.exp1 == "true": return True
-        if expBol.exp1 == "false" : return False
+        if expBol.exp1 == "true": 
+            temp = TS.getNextTemp(0)
+        
+            TS.inst += f'addi {temp}, x0, 1\n'
+
+            return temp, TIPOS_P.BOOLEAN
+            
+        if expBol.exp1 == "false" :
+            temp = TS.getNextTemp(0)
+        
+            TS.inst += f'addi {temp}, x0, 0\n'
+
+            return temp, TIPOS_P.BOOLEAN
 
 def resolver_expresionTernaria(expTer,TS):
     if ejec_expresion(expTer.exp1):
@@ -260,6 +282,13 @@ def ejec_declaracion_explicita(inst,TS):
             temp = TS.getNextTemp(0)
             TS.inst += f'la {temp},{inst.id}\n'
             TS.inst += f'sw {exp},0({temp})\n'
+    if inst.tipo == TIPOS_P.BOOLEAN:
+        TS.Datos += f'{inst.id}: .byte 1\n'
+        if exp!= None:
+            cont+=1
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp},{inst.id}\n'
+            TS.inst += f'sw {exp},0({temp})\n'
     
     TS.restoreTemp(cont)
  #   TSReporte.agregar(copy.deepcopy(simbolo))
@@ -285,6 +314,13 @@ def ejec_declaracion_implicita(inst,TS):
 
     if tipo== TIPOS_P.ENTERO:
         TS.Datos += f'{inst.id}: .word 0\n'
+        if exp!= None:
+            cont+=1
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp},{inst.id}\n'
+            TS.inst += f'sw {exp},0({temp})\n'
+    if inst.tipo == TIPOS_P.BOOLEAN:
+        TS.Datos += f'{inst.id}: .byte 1\n'
         if exp!= None:
             cont+=1
             temp = TS.getNextTemp(0)
