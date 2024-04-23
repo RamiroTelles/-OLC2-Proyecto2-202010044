@@ -333,7 +333,7 @@ def ejec_declaracion_implicita(inst,TS):
 
 def ejec_Asignacion(inst,TS):
     
-    exp = ejec_expresion(inst.valor,TS)
+    exp,tipo = ejec_expresion(inst.valor,TS)
     simbolo = TS.obtener(inst.id)
     
     if simbolo== None:
@@ -346,23 +346,19 @@ def ejec_Asignacion(inst,TS):
         listaErrores.append(error("No se puede asignar a Constante "+inst.id,0,0,"Semantico"))
         return
 
-    try:
-        if simbolo.tipo==TIPOS_P.ENTERO:
-            exp= int(exp)
-        elif simbolo.tipo==TIPOS_P.FLOAT:
-            exp= float(exp)
-        elif simbolo.tipo==TIPOS_P.CADENA:
-            exp= str(exp)
-        elif simbolo.tipo==TIPOS_P.CHAR:
-            exp= str(exp)
-        elif simbolo.tipo==TIPOS_P.BOOLEAN:
-            exp= bool(exp)
-    except:
+    
+    if simbolo.tipo!=tipo:
         print("Error, "+inst.id+" No se puede asignar un tipo de variable diferente")
         listaErrores.append(error(inst.id+" No se puede asignar un tipo de variable diferente",0,0,"Semantico"))
+
+    
+    temp = TS.getNextTemp(0)
+    TS.inst += f'la {temp},{inst.id}\n'
+    TS.inst += f'sw {exp},0({temp})\n'
     TS.actualizar(inst.id,exp)
     
-    TSReporte.actualizar(copy.deepcopy(inst.id),copy.deepcopy(exp))
+    TS.restoreTemp(2)
+    #TSReporte.actualizar(copy.deepcopy(inst.id),copy.deepcopy(exp))
 
 
 def ejec_controlFlujo(inst,TS):
