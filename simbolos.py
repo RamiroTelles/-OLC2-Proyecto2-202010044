@@ -27,7 +27,7 @@ class TablaSimbolos():
         self.label=-1
         self.msg=-1
         self.inst=""
-        self.Datos ="msgSalto: .byte 10 \n"
+        self.Datos =""
 
     def agregar(self, simbolo):
         self.simbolos[simbolo.id] = simbolo
@@ -86,7 +86,7 @@ class TablaSimbolos():
         self.simbolos.clear()
         self.ambito='global'
         self.inst=""
-        self.Datos="msgSalto: .byte 10 \n"
+        self.Datos=""
 
     def getSalida(self):
         return f'''
@@ -94,13 +94,30 @@ class TablaSimbolos():
           
     {self.Datos}
 
+    
+    msgSalto: .byte 10 
+	msgErrorDivisionlen: .word 21
+	msgErrorDivision: .asciz "Error, division por 0"
+
     .text
     .globl main
     main:
 
     {self.inst}
 
-    li a7, 10    
-    ecall
+    final:
+	li a7, 10    
+	ecall
+
+	
+	err_divisionZero:
+	
+	la a0, msgErrorDivisionlen
+	la a1, msgErrorDivision
+	lw a2, 0(a0)
+	li a0,1
+	li a7,64
+	ecall
+	j final
 
     '''
