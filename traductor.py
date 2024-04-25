@@ -23,10 +23,12 @@ def ejec_instrucciones(instrucciones,TS,save=True):
             #elif isinstance(inst,AsignacionMatriz): ejec_AsignacionMatriz(inst,TS)
             elif isinstance(inst,funcionPush): ejec_FuncionPush(inst,TS)
             elif isinstance(inst,controlFlujo): #ejec_controlFlujo(inst,TS)
-                tupla=ejec_controlFlujo(inst,TS)
-                if tupla!=None:
-                    return tupla
+                #tupla=ejec_controlFlujo(inst,TS)
+                
+                #if tupla!=None:
+                    #return tupla
                     #pass
+                ejec_controlFlujo(inst,TS)
             elif isinstance(inst,guardar_func): pass
                 
         else:
@@ -82,7 +84,7 @@ def ejec_Imprimir(inst,TS):
                         L{label2}:\n'''
         elif isinstance(exp,ExpresionID):
             if tipo==TIPOS_P.ENTERO:
-                TS.inst += f''' lw a0, {result}
+                TS.inst += f''' add a0, {result},x0
                             li a7, 1 
                             ecall\n'''
             elif tipo==TIPOS_P.CHAR:
@@ -527,9 +529,10 @@ def ejec_Asignacion(inst,TS):
 
 def ejec_controlFlujo(inst,TS):
     if isinstance(inst,inst_if): 
-        tupla = ejec_If(inst,TS)
-        if tupla != None:
-            return tupla
+        #tupla = ejec_If(inst,TS)
+        #if tupla != None:
+            #return tupla
+        ejec_If(inst,TS)
 
     elif isinstance(inst,inst_while): return ejec_While(inst,TS)
     elif isinstance(inst,inst_for): return ejec_For(inst,TS)
@@ -587,24 +590,61 @@ def ejec_If(inst,TS):
  
 
 def ejec_While(inst,TS):
+
+    Linicio = f'L{TS.getNextLabel()}'
+    Lsent = f'L{TS.getNextLabel()}'
+    Lsalida=f'L{TS.getNextLabel()}'
+    TS.inst+=f'{Linicio}:\n'
     
-    exp = ejec_expresion(inst.cond,TS)
-    while exp:
-        TablaLocal = TablaSimbolos(simbolos=TS.simbolos.copy(),ambito=TS.ambito +"_While")
+    exp,tipo = ejec_expresion(inst.cond,TS)
+    
+    TS.inst+= f'''  bnez {exp},{Lsent}
+                    j {Lsalida}
+                {Lsent}:\n'''
+    
+    ejec_instrucciones(inst.instrucciones,TS)
 
-        tupla = ejec_instrucciones(inst.instrucciones,TablaLocal)
-        if tupla!=None:
+    TS.inst+=f'j {Linicio}\n'
+    TS.inst+=f'{Lsalida}:\n'
 
-            if isinstance(tupla[0],inst_Break):
+    # while exp:
+    #     TablaLocal = TablaSimbolos(simbolos=TS.simbolos.copy(),ambito=TS.ambito +"_While")
+
+    #     tupla = ejec_instrucciones(inst.instrucciones,TablaLocal)
+    #     if tupla!=None:
+
+    #         if isinstance(tupla[0],inst_Break):
                 
-                break
-            if isinstance(tupla[0],inst_Return):
+    #             break
+    #         if isinstance(tupla[0],inst_Return):
                 
-                return tupla
+    #             return tupla
 
-        exp = ejec_expresion(inst.cond,TS)
+    #     exp = ejec_expresion(inst.cond,TS)
         #TS.salida+= TablaLocal.salida
     
+#     Linicio:
+# 	la t0,i
+# 	lw t0,0(t0)
+# 	li t1,0
+# 	bgt t0,t1,Ltrue
+# 	j Lfalse
+# Ltrue:
+# 	la t0,i
+# 	lw t0,0(t0)
+# 	add a0,t0,x0
+# 	li a7,1
+# 	ecall
+	
+# 	la t0,i
+# 	lw t0,0(t0)
+# 	li t1,1
+# 	sub t0,t0,t1
+# 	la t1,i
+# 	sw t0,0(t1)
+# 	j Linicio
+	
+# Lfalse:
         
     
     
