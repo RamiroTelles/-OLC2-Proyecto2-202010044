@@ -553,20 +553,38 @@ def ejec_controlFlujo(inst,TS):
         return inst,ejec_expresion(inst.valor,TS) 
     
 def ejec_If(inst,TS):
-    exp = ejec_expresion(inst.cond,TS)
-    if exp:
-        TablaLocal = TablaSimbolos(simbolos=TS.simbolos.copy(),ambito=TS.ambito +"_If")
+    exp,tipo = ejec_expresion(inst.cond,TS)
 
-        tupla = ejec_instrucciones(inst.instruccionesIf,TablaLocal)
-        #TS.salida+= TablaLocal.salida
-        
-    else:
-        TablaLocal = TablaSimbolos(simbolos=TS.simbolos.copy(),ambito=TS.ambito +"_If")
+    if tipo!= TIPOS_P.BOOLEAN:
+        print("Expresion invalida en If")
+        listaErrores.append(error("Expresion invalida en If",0,0,"Semantico"))
+    Lt = f'L{TS.getNextLabel()}'
+    Lf = f'L{TS.getNextLabel()}'
+    Lsalida = f'L{TS.getNextLabel()}'
 
-        tupla = ejec_instrucciones(inst.instruccionesElse,TablaLocal)
-        #TS.salida+= TablaLocal.salida
+    TS.inst+= f'''  bnez {exp},{Lt}
+                    j {Lf}
+                {Lt}:\n'''
     
-    return tupla
+    ejec_instrucciones(inst.instruccionesIf,TS)
+
+    TS.inst+= f'''  j {Lsalida}
+                {Lf}:\n'''
+
+    ejec_instrucciones(inst.instruccionesElse,TS)
+
+    TS.inst+= f'''{Lsalida}:\n'''
+    
+    
+    #  	bnez t0,L1
+    #     j L2
+    # L1:
+    #     jal _print_true
+    #     j L3
+    # L2:
+    #     jal _print_false
+    # L3:
+ 
 
 def ejec_While(inst,TS):
     
