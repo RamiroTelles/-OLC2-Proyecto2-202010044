@@ -653,29 +653,73 @@ def ejec_For(inst,TS):
     
     
         
+    Linicio = f'L{TS.getNextLabel()}'
+    Lsent = f'L{TS.getNextLabel()}'
+    Lcontinue = f'L{TS.getNextLabel()}'
+    Lsalida = f'L{TS.getNextLabel()}'
+    
+    ejec_instrucciones(inst.instruccion1,TS)
 
+    TS.inst += f'{Linicio}:\n'
+    exp,tipo = ejec_expresion(inst.cond,TS)
 
-    TablaLocal = TablaSimbolos(simbolos=TS.simbolos.copy(),ambito=TS.ambito +"_For")
+    TS.inst +=f'bnez {exp},{Lsent}\n'
+    TS.inst +=f'j {Lsalida}\n'
+    TS.inst += f'{Lsent}:\n'
+
+    ejec_instrucciones(inst.instruccion_verdadero,TS)
+
+    TS.inst += f'{Lcontinue}:\n'
+
+    ejec_instrucciones(inst.instruccion2,TS)
+    TS.inst +=f'j {Linicio}\n'
+    TS.inst += f'{Lsalida}:\n'
+
+    # TablaLocal = TablaSimbolos(simbolos=TS.simbolos.copy(),ambito=TS.ambito +"_For")
 
   
-    ejec_instrucciones(copy.deepcopy(inst.instruccion1),TablaLocal)
-    exp= ejec_expresion(inst.cond,TablaLocal)
+    # ejec_instrucciones(copy.deepcopy(inst.instruccion1),TablaLocal)
+    # exp= ejec_expresion(inst.cond,TablaLocal)
 
-    while exp:
-        #TablaLocal2 = copy.deepcopy(TablaLocal)
-        tupla = ejec_instrucciones(inst.instruccion_verdadero,TablaLocal)
-        if tupla!=None:
+    # while exp:
+    #     #TablaLocal2 = copy.deepcopy(TablaLocal)
+    #     tupla = ejec_instrucciones(inst.instruccion_verdadero,TablaLocal)
+    #     if tupla!=None:
 
-            if isinstance(tupla[0],inst_Break):
+    #         if isinstance(tupla[0],inst_Break):
                 
-                break
-            if isinstance(tupla[0],inst_Return):
+    #             break
+    #         if isinstance(tupla[0],inst_Return):
                 
-                return tupla
-        ejec_instrucciones(inst.instruccion2,TablaLocal)
-        #TablaLocal.actualizar(inst.instruccion2[0].id,ejec_expresion(inst.instruccion2[0].valor,TablaLocal))
-        exp = ejec_expresion(inst.cond,TablaLocal)
-    #TS.salida+= TablaLocal.salida
+    #             return tupla
+    #     ejec_instrucciones(inst.instruccion2,TablaLocal)
+    #     #TablaLocal.actualizar(inst.instruccion2[0].id,ejec_expresion(inst.instruccion2[0].valor,TablaLocal))
+    #     exp = ejec_expresion(inst.cond,TablaLocal)
+    # #TS.salida+= TablaLocal.salida
+
+
+#     Linicio:
+# 	la t0,i
+# 	lw t0,0(t0)
+# 	addi t1,x0,10
+# 	addi a0,x0,1
+# 	blt t0,t1,Lv
+# 	addi a0,x0,0
+# Lv:
+# 	add t0, a0,x0
+# 	bnez t0,Lsent
+# 	j Lsalida
+# Lsent:
+# 	call _print_true
+	
+# Lcontinue:
+# 	la t0,i
+# 	lw t0,0(t0)
+# 	addi t0,t0,1
+# 	la t1,i
+# 	sw t0, 0(t1)
+# 	j Linicio
+# Lsalida:
         
 def ejec_Switch(inst,TS):
     valorId = ejec_expresion(inst.id,TS)
