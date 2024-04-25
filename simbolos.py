@@ -96,9 +96,13 @@ class TablaSimbolos():
 
     
     msgSalto: .byte 10 
+    BufferChar: .byte 0
 	msgErrorDivisionlen: .word 21
 	msgErrorDivision: .asciz "Error, division por 0"
-
+    msgTruelen: .word 4
+    msgTrue: .asciz "True"
+    msgFalselen: .word 5
+    msgFalse: .asciz "False"
     .text
     .globl main
     main:
@@ -119,5 +123,25 @@ class TablaSimbolos():
 	li a7,64
 	ecall
 	j final
+
+    _print_true:
+
+    la a0, msgTruelen
+	la a1, msgTrue
+	lw a2, 0(a0)
+	li a0,1
+	li a7,64
+	ecall
+    ret
+
+    _print_false:
+
+    la a0, msgFalselen
+	la a1, msgFalse
+	lw a2, 0(a0)
+	li a0,1
+	li a7,64
+	ecall
+    ret
 
     '''

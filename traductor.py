@@ -20,7 +20,7 @@ def ejec_instrucciones(instrucciones,TS,save=True):
             elif isinstance(inst,DeclaracionImplicita): ejec_declaracion_implicita(inst,TS)
             elif isinstance(inst,Asignacion): ejec_Asignacion(inst,TS)
             elif isinstance(inst,AsignacionArray): ejec_AsignacionArray(inst,TS)
-            elif isinstance(inst,AsignacionMatriz): ejec_AsignacionMatriz(inst,TS)
+            #elif isinstance(inst,AsignacionMatriz): ejec_AsignacionMatriz(inst,TS)
             elif isinstance(inst,funcionPush): ejec_FuncionPush(inst,TS)
             elif isinstance(inst,controlFlujo): #ejec_controlFlujo(inst,TS)
                 tupla=ejec_controlFlujo(inst,TS)
@@ -50,6 +50,58 @@ def ejec_Imprimir(inst,TS):
                             li a0, 1 
                             li a7, 64 
                             ecall\n'''
+        elif isinstance(exp,ExpresionComillaSimple):
+            TS.inst += f''' la a0, BufferChar
+                            sb {result}, 0(a0)
+                            la a1, BufferChar
+                            li a2, 1
+                            li a0, 1 
+                            li a7, 64 
+                            ecall\n'''
+        elif isinstance(exp,ExpresionAritmetica):
+            TS.inst += f''' add a0, {result},x0
+                            li a7, 1 
+                            ecall\n'''
+        elif isinstance(exp,ExpresionRelacional):
+            label1 = TS.getNextLabel()
+            label2= TS.getNextLabel()
+            TS.inst += f''' beqz {result},L{label1}
+                            jal _print_true
+                            j L{label2}
+                        L{label1}:
+                            jal _print_false
+                        L{label2}:\n'''
+        elif isinstance(exp,ExpresionBoleana):
+            label1 = TS.getNextLabel()
+            label2= TS.getNextLabel()
+            TS.inst += f''' beqz {result},L{label1}
+                            jal _print_true
+                            j L{label2}
+                        L{label1}:
+                            jal _print_false
+                        L{label2}:\n'''
+        elif isinstance(exp,ExpresionID):
+            if tipo==TIPOS_P.ENTERO:
+                TS.inst += f''' lw a0, {result}
+                            li a7, 1 
+                            ecall\n'''
+            elif tipo==TIPOS_P.CHAR:
+                TS.inst += f''' la a0, BufferChar
+                            sb {result}, 0(a0)
+                            la a1, BufferChar
+                            li a2, 1
+                            li a0, 1 
+                            li a7, 64 
+                            ecall\n'''
+            elif tipo==TIPOS_P.BOOLEAN:
+                label1 = TS.getNextLabel()
+                label2= TS.getNextLabel()
+                TS.inst += f''' beqz {result},L{label1}
+                                jal _print_true
+                                j L{label2}
+                            L{label1}:
+                                jal _print_false
+                            L{label2}:\n'''
         
         #Luego Escribe salto de linea
         TS.inst  += f'''la a1, msgSalto
@@ -196,25 +248,130 @@ def resolver_expresionAritmetica(expNum,TS):
 
 def resolver_expresionRelacional(exp,TS):
     if isinstance(exp,ExpresionRelacional):
-        exp1 = ejec_expresion(exp.exp1,TS)
-        exp2 = ejec_expresion(exp.exp2,TS)
+        exp1,tipo1 = ejec_expresion(exp.exp1,TS)
+        exp2,tipo2 = ejec_expresion(exp.exp2,TS)
 
-        if exp.operador == OPERACION_REL.MAYOR_QUE : return exp1 > exp2
-        if exp.operador == OPERACION_REL.MENOR_QUE : return exp1 < exp2
-        if exp.operador == OPERACION_REL.MAYORIGUAL : return exp1 >= exp2
-        if exp.operador == OPERACION_REL.MENORIGUAL : return exp1 <= exp2
-        if exp.operador == OPERACION_REL.IGUAL : return exp1 == exp2
-        if exp.operador == OPERACION_REL.NO_IGUAL : return exp1 != exp2
+        if tipo1==tipo2:
+
+            if tipo1!=TIPOS_P.ENTERO and tipo1!=TIPOS_P.FLOAT:
+                if exp.operador == OPERACION_REL.IGUAL :
+                    label= f'L{TS.getNextLabel()}'
+                    TS.inst += f'addi a0,x0,1\n'
+                    TS.inst += f'beq {exp1},{exp2},{label}\n'
+                    TS.inst += f'addi a0,x0,0\n'
+                    TS.inst += f'{label}:\n'
+                    temp = TS.getNextTemp(2)
+                    TS.inst += f'add {temp},a0,x0\n'
+                    
+                    return temp , TIPOS_P.BOOLEAN
+                elif exp.operador == OPERACION_REL.NO_IGUAL :
+                    label= f'L{TS.getNextLabel()}'
+                    TS.inst += f'addi a0,x0,1\n'
+                    TS.inst += f'bne {exp1},{exp2},{label}\n'
+                    TS.inst += f'addi a0,x0,0\n'
+                    TS.inst += f'{label}:\n'
+                    temp = TS.getNextTemp(2)
+                    TS.inst += f'add {temp},a0,x0\n'
+                    
+                    return temp , TIPOS_P.BOOLEAN
+            else:
+
+                if exp.operador == OPERACION_REL.MAYOR_QUE : 
+                    
+                    label= f'L{TS.getNextLabel()}'
+                    TS.inst += f'addi a0,x0,1\n'
+                    TS.inst += f'bgt {exp1},{exp2},{label}\n'
+                    TS.inst += f'addi a0,x0,0\n'
+                    TS.inst += f'{label}:\n'
+                    temp = TS.getNextTemp(2)
+                    TS.inst += f'add {temp},a0,x0\n'
+                    
+                    return temp , TIPOS_P.BOOLEAN
+                elif exp.operador == OPERACION_REL.MENOR_QUE :
+                    label= f'L{TS.getNextLabel()}'
+                    TS.inst += f'addi a0,x0,1\n'
+                    TS.inst += f'blt {exp1},{exp2},{label}\n'
+                    TS.inst += f'addi a0,x0,0\n'
+                    TS.inst += f'{label}:\n'
+                    temp = TS.getNextTemp(2)
+                    TS.inst += f'add {temp},a0,x0\n'
+                    
+                    return temp , TIPOS_P.BOOLEAN
+                elif exp.operador == OPERACION_REL.MAYORIGUAL :
+                    label= f'L{TS.getNextLabel()}'
+                    TS.inst += f'addi a0,x0,1\n'
+                    TS.inst += f'bge {exp1},{exp2},{label}\n'
+                    TS.inst += f'addi a0,x0,0\n'
+                    TS.inst += f'{label}:\n'
+                    temp = TS.getNextTemp(2)
+                    TS.inst += f'add {temp},a0,x0\n'
+                    
+                    return temp , TIPOS_P.BOOLEAN
+                elif exp.operador == OPERACION_REL.MENORIGUAL :
+                    label= f'L{TS.getNextLabel()}'
+                    TS.inst += f'addi a0,x0,1\n'
+                    TS.inst += f'ble {exp1},{exp2},{label}\n'
+                    TS.inst += f'addi a0,x0,0\n'
+                    TS.inst += f'{label}:\n'
+                    temp = TS.getNextTemp(2)
+                    TS.inst += f'add {temp},a0,x0\n'
+                    
+                    return temp , TIPOS_P.BOOLEAN
+                elif exp.operador == OPERACION_REL.IGUAL :
+                    label= f'L{TS.getNextLabel()}'
+                    TS.inst += f'addi a0,x0,1\n'
+                    TS.inst += f'beq {exp1},{exp2},{label}\n'
+                    TS.inst += f'addi a0,x0,0\n'
+                    TS.inst += f'{label}:\n'
+                    temp = TS.getNextTemp(2)
+                    TS.inst += f'add {temp},a0,x0\n'
+                    
+                    return temp , TIPOS_P.BOOLEAN
+                elif exp.operador == OPERACION_REL.NO_IGUAL :
+                    label= f'L{TS.getNextLabel()}'
+                    TS.inst += f'addi a0,x0,1\n'
+                    TS.inst += f'bne {exp1},{exp2},{label}\n'
+                    TS.inst += f'addi a0,x0,0\n'
+                    TS.inst += f'{label}:\n'
+                    temp = TS.getNextTemp(2)
+                    TS.inst += f'add {temp},a0,x0\n'
+                    
+                    return temp , TIPOS_P.BOOLEAN
+        else:
+            listaErrores.append(error("Tipos no combatibles "+str(tipo1)+str(tipo2),0,0,"Semantico"))
+            print("Tipos no combatibles "+str(tipo1)+str(tipo2))
     
 def resolver_expresionBoleana(expBol,TS):
     if isinstance(expBol,ExpresionLogica):
-        exp1 = ejec_expresion(expBol.exp1,TS)
-        exp2 = ejec_expresion(expBol.exp2,TS)
+        exp1,tipo1 = ejec_expresion(expBol.exp1,TS)
+        exp2,tipo2 = ejec_expresion(expBol.exp2,TS)
 
-        if expBol.operador == OPERACION_LOGICA.AND : return exp1 and exp2
-        if expBol.operador == OPERACION_LOGICA.OR : return exp1 or exp2
+        if tipo1 == TIPOS_P.BOOLEAN and tipo2 == TIPOS_P.BOOLEAN:
+
+
+            if expBol.operador == OPERACION_LOGICA.AND :
+                temp= TS.getNextTemp(2)
+                TS.inst += f'and {temp},{exp1},{exp2}\n'
+                return temp , TIPOS_P.BOOLEAN
+
+            if expBol.operador == OPERACION_LOGICA.OR :
+                temp= TS.getNextTemp(2)
+                TS.inst += f'or {temp},{exp1},{exp2}\n'
+                return temp , TIPOS_P.BOOLEAN
+        else:
+            listaErrores.append(error("Tipos no combatibles "+str(tipo1)+str(tipo2),0,0,"Semantico"))
+            print("Tipos no combatibles "+str(tipo1)+str(tipo2))
     elif isinstance(expBol,ExpresionNot):
-        return not ejec_expresion(expBol.exp1,TS)
+
+        exp1,tipo = ejec_expresion(expBol.exp1,TS)
+        temp= TS.getNextTemp(1)
+        
+        TS.inst += f'not {temp},{exp1}\n'
+        TS.inst += f'addi a0,x0,1\n'
+        TS.inst += f'and {temp},{temp},a0\n'
+       
+        return temp,TIPOS_P.BOOLEAN
+        #return not ejec_expresion(expBol.exp1,TS)
     elif isinstance(expBol,Expresion_True_False):
         if expBol.exp1 == "true": 
             temp = TS.getNextTemp(0)
@@ -284,6 +441,13 @@ def ejec_declaracion_explicita(inst,TS):
             TS.inst += f'sw {exp},0({temp})\n'
     if inst.tipo == TIPOS_P.BOOLEAN:
         TS.Datos += f'{inst.id}: .byte 1\n'
+        if exp!= None:
+            cont+=1
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp},{inst.id}\n'
+            TS.inst += f'sw {exp},0({temp})\n'
+    if inst.tipo == TIPOS_P.CHAR:
+        TS.Datos += f'{inst.id}: .byte 0\n'
         if exp!= None:
             cont+=1
             temp = TS.getNextTemp(0)
