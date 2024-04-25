@@ -187,9 +187,9 @@ def ejec_expresion(exp,TS):
 
 
     elif isinstance(exp,ExpresionNull):
-        return None
+        return None , TIPOS_P.VOID
     else :
-        return None
+        return None , TIPOS_P.VOID
     
  
 
@@ -390,7 +390,7 @@ def resolver_expresionBoleana(expBol,TS):
             return temp, TIPOS_P.BOOLEAN
 
 def resolver_expresionTernaria(expTer,TS):
-    if ejec_expresion(expTer.exp1):
+    if ejec_expresion(expTer.exp1,TS):
         return ejec_expresion(expTer.exp2,TS)
     return ejec_expresion(expTer.exp3,TS)
 
@@ -722,43 +722,118 @@ def ejec_For(inst,TS):
 # Lsalida:
         
 def ejec_Switch(inst,TS):
-    valorId = ejec_expresion(inst.id,TS)
-    posDefault=-1
-    contador=-1
-    for i in range(len(inst.listaExpresiones)):
-        exp= ejec_expresion(inst.listaExpresiones[i],TS)
-        if exp==None:
-            posDefault=i
-        elif valorId== exp:
-            contador=i
 
-    TablaLocal = TablaSimbolos(simbolos=TS.simbolos.copy(),ambito=TS.ambito +"_Switch")
-    if contador!=-1:
-        for i in range(contador,len(inst.listaInst)):
-            tupla = ejec_instrucciones(inst.listaInst[i],TablaLocal)
+    Ltest = f'L{TS.getNextLabel()}'
+    Lsalida = f'L{TS.getNextLabel()}'
+    listaLabels=[]
+    labelDefault = ""
+    TS.inst+= f'j {Ltest}\n'
+    
+    for i in range(0,len(inst.listaInst)):
+        listaLabels.append(f'L{TS.getNextLabel()}')
+        TS.inst+= f'{listaLabels[i]}:\n'
+        ejec_instrucciones(inst.listaInst[i],TS)
+
+    TS.inst += f'j {Lsalida}\n'
+    TS.inst+= f'{Ltest}:\n'
+    expId,tipoId = ejec_expresion(inst.id,TS)
+    TS.inst+= f'add a1,x0,{expId}\n'
+    TS.restoreTemp(1)
+
+    for i in range(0,len(inst.listaExpresiones)):
+        
+        exp,tipo1 = ejec_expresion(inst.listaExpresiones[i],TS)
+
+        if exp ==None:
+            labelDefault = listaLabels[i]
+            continue
+        
+
+
+        if tipoId != tipo1:
+            print("Comparando tipos diferentes")
+            listaErrores.append(error("Comparando tipos diferentes",0,0,"Semantico"))
+            return
+        
+        TS.inst += f'beq a1,{exp},{listaLabels[i]}\n'
+        TS.restoreTemp(1)
+    
+    if labelDefault!="":
+        TS.inst += f'j {labelDefault}\n'
+    TS.inst += f'{Lsalida}:\n'
+    
+
+
+
+
+
+    # valorId = ejec_expresion(inst.id,TS)
+    # posDefault=-1
+    # contador=-1
+    # for i in range(len(inst.listaExpresiones)):
+    #     exp= ejec_expresion(inst.listaExpresiones[i],TS)
+    #     if exp==None:
+    #         posDefault=i
+    #     elif valorId== exp:
+    #         contador=i
+
+    # TablaLocal = TablaSimbolos(simbolos=TS.simbolos.copy(),ambito=TS.ambito +"_Switch")
+    # if contador!=-1:
+    #     for i in range(contador,len(inst.listaInst)):
+    #         tupla = ejec_instrucciones(inst.listaInst[i],TablaLocal)
             
-            if tupla!=None:
+    #         if tupla!=None:
 
-                if isinstance(tupla[0],inst_Break):
+    #             if isinstance(tupla[0],inst_Break):
                     
-                    break
-                if isinstance(tupla[0],inst_Return):
+    #                 break
+    #             if isinstance(tupla[0],inst_Return):
                     
-                    return tupla
-    elif posDefault!=-1:
-        for i in range(posDefault,len(inst.listaInst)):
-            tupla = ejec_instrucciones(inst.listaInst[i],TablaLocal)
+    #                 return tupla
+    # elif posDefault!=-1:
+    #     for i in range(posDefault,len(inst.listaInst)):
+    #         tupla = ejec_instrucciones(inst.listaInst[i],TablaLocal)
             
-            if tupla!=None:
+    #         if tupla!=None:
 
-                if isinstance(tupla[0],inst_Break):
+    #             if isinstance(tupla[0],inst_Break):
                     
-                    break
-                if isinstance(tupla[0],inst_Return):
+    #                 break
+    #             if isinstance(tupla[0],inst_Return):
                     
-                    return tupla
+    #                 return tupla
 
-    #TS.salida+= TablaLocal.salida
+    # #TS.salida+= TablaLocal.salida
+
+#     	j test
+# L1:
+# 	li a0,1
+# 	li a7,1
+# 	ecall
+# L2:
+# 	li a0,2
+# 	li a7,1
+# 	ecall
+# L3:
+# 	li a0,3
+# 	li a7,1
+# 	ecall
+# L4:
+# 	li a0,4
+# 	li a7,1
+# 	ecall
+# 	j Lsalida
+# test:
+# 	la t0,numero
+# 	lw t0,0(t0)
+# 	addi t1,x0,1
+# 	beq t0,t1,L1
+# 	addi t1,x0,2
+# 	beq t0,t1,L2
+# 	addi t1,x0,3
+# 	beq t0,t1,L3
+# 	j L4
+# Lsalida:
 
 def ejec_Guardar_Func(inst,TS):
     sim =TS.obtener(inst.id)

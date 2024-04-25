@@ -309,7 +309,7 @@ def p_listCases1(t):
 
 def p_listCases2(t):
     '''listCases    : listCases DEFAULT DOSPUNTOS instrucciones'''
-    t[1][0].append(None)
+    t[1][0].append(ExpresionNull())
     t[1][1].append(t[4])
     t[0]=t[1]
     
