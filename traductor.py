@@ -3,9 +3,11 @@ from instrucciones import *
 from simbolos import *
 from tipos import TIPOS_P,TIPOS_Simbolos
 from errores import error
+from display import display
 import copy
 
 listaErrores =[]
+PilaDisplay =[]
 
 
 TSReporte = TablaSimbolos()
@@ -539,23 +541,45 @@ def ejec_controlFlujo(inst,TS):
     elif isinstance(inst,inst_switch): return ejec_Switch(inst,TS)
     elif isinstance(inst,call_func): ejec_Funcion(inst,TS)
     elif isinstance(inst,inst_Continue): 
-        if('While' in TS.ambito or 'For' in TS.ambito):
-            return inst,None
-        else:
-            print("Sentencia continue fuera de un Ciclo")
-            listaErrores.append(error("Sentencia continue fuera de un Ciclo",0,0,"Semantico"))
-    elif isinstance(inst,inst_Break): 
-       
+        if len(PilaDisplay)==0:
+            print("Break no dentro de un ciclo")
+            listaErrores.append(error("Break no dentro de un ciclo o switch",0,0,"Semantico"))
+            return
         
-        if('While' in TS.ambito or 'For' in TS.ambito or 'Switch' in TS.ambito):
-            return inst,None
-        else:
-            print("Sentencia break fuera de flujo de control valido")
-            listaErrores.append(error("Sentencia break fuera de flujo de control valido",0,0,"Semantico"))
+        for i in range(1,len(PilaDisplay)+1):
+
+            if PilaDisplay[len(PilaDisplay)-i].Lcontinue=="":
+                continue
+
+            TS.inst += f'j {PilaDisplay[len(PilaDisplay)-i].Lcontinue}\n'
+            return
+        
+        
+        print("Continue no dentro de un ciclo")
+        listaErrores.append(error("Continue no dentro de un ciclo o switch",0,0,"Semantico"))
+        
+        
+    elif isinstance(inst,inst_Break): 
+        if len(PilaDisplay)==0:
+            print("Break no dentro de un ciclo o switch")
+            listaErrores.append(error("Break no dentro de un ciclo o switch",0,0,"Semantico"))
+            return
+        for i in range(1,len(PilaDisplay)+1):
+
+            if PilaDisplay[len(PilaDisplay)-i].Lsalida=="":
+                continue
+
+            TS.inst += f'j {PilaDisplay[len(PilaDisplay)-i].Lsalida}\n'
+            return
+        
+        print("Break no dentro de un ciclo o switch")
+        listaErrores.append(error("Break no dentro de un ciclo o switch",0,0,"Semantico"))
+        
     elif isinstance(inst,inst_Return):
         return inst,ejec_expresion(inst.valor,TS) 
     
 def ejec_If(inst,TS):
+    PilaDisplay.append(display("","",0))
     exp,tipo = ejec_expresion(inst.cond,TS)
 
     if tipo!= TIPOS_P.BOOLEAN:
@@ -578,6 +602,7 @@ def ejec_If(inst,TS):
 
     TS.inst+= f'''{Lsalida}:\n'''
     
+    PilaDisplay.pop()
     
     #  	bnez t0,L1
     #     j L2
@@ -594,6 +619,7 @@ def ejec_While(inst,TS):
     Linicio = f'L{TS.getNextLabel()}'
     Lsent = f'L{TS.getNextLabel()}'
     Lsalida=f'L{TS.getNextLabel()}'
+    PilaDisplay.append(display(Lsalida,Linicio,0))
     TS.inst+=f'{Linicio}:\n'
     
     exp,tipo = ejec_expresion(inst.cond,TS)
@@ -606,6 +632,7 @@ def ejec_While(inst,TS):
 
     TS.inst+=f'j {Linicio}\n'
     TS.inst+=f'{Lsalida}:\n'
+    PilaDisplay.pop()
 
     # while exp:
     #     TablaLocal = TablaSimbolos(simbolos=TS.simbolos.copy(),ambito=TS.ambito +"_While")
@@ -657,7 +684,7 @@ def ejec_For(inst,TS):
     Lsent = f'L{TS.getNextLabel()}'
     Lcontinue = f'L{TS.getNextLabel()}'
     Lsalida = f'L{TS.getNextLabel()}'
-    
+    PilaDisplay.append(display(Lsalida,Lcontinue,0))
     ejec_instrucciones(inst.instruccion1,TS)
 
     TS.inst += f'{Linicio}:\n'
@@ -675,6 +702,7 @@ def ejec_For(inst,TS):
     TS.inst +=f'j {Linicio}\n'
     TS.inst += f'{Lsalida}:\n'
 
+    PilaDisplay.pop()
     # TablaLocal = TablaSimbolos(simbolos=TS.simbolos.copy(),ambito=TS.ambito +"_For")
 
   
@@ -725,6 +753,7 @@ def ejec_Switch(inst,TS):
 
     Ltest = f'L{TS.getNextLabel()}'
     Lsalida = f'L{TS.getNextLabel()}'
+    PilaDisplay.append(display(Lsalida,"",0))
     listaLabels=[]
     labelDefault = ""
     TS.inst+= f'j {Ltest}\n'
@@ -761,6 +790,8 @@ def ejec_Switch(inst,TS):
     if labelDefault!="":
         TS.inst += f'j {labelDefault}\n'
     TS.inst += f'{Lsalida}:\n'
+
+    PilaDisplay.pop()
     
 
 

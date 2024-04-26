@@ -2,7 +2,7 @@
 
 class Simbolos(): #VALOR - NODO
     
-    def __init__(self, id, tipo_simbolo,tipo, valor,ambito, instrucciones = [], parametros = [], props = {},linea=0,columna=0):
+    def __init__(self, id, tipo_simbolo,tipo, valor,ambito, instrucciones = [], parametros = [],linea=0,columna=0):
         self.id = id
         self.tipo = tipo
         self.tipo_simbolo =tipo_simbolo
@@ -11,7 +11,7 @@ class Simbolos(): #VALOR - NODO
        
         self.instrucciones = instrucciones
         self.parametros = parametros
-        self.props = props
+        
         self.linea = linea
         self.columna = columna
 
