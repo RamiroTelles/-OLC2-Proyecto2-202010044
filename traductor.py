@@ -402,9 +402,28 @@ def resolver_expresionId(expId,TS):
         listaErrores.append(error("Se quiere usar valor null con variable "+expId.id,0,0,"Semantico"))
         print("Se quiere usar valor null con variable "+expId.id)
         return
-    temp = TS.getNextTemp(0)
-    TS.inst += f'la {temp}, {expId.id}\n'
-    TS.inst += f'lw {temp}, 0({temp})\n'
+    
+    if exp_id.tipo== TIPOS_P.ENTERO:
+        
+        temp = TS.getNextTemp(0)
+        TS.inst += f'la {temp}, {expId.id}\n'
+        TS.inst += f'lw {temp}, 0({temp})\n'
+    if exp_id.tipo == TIPOS_P.BOOLEAN:
+        
+        temp = TS.getNextTemp(0)
+        TS.inst += f'la {temp}, {expId.id}\n'
+        TS.inst += f'lb {temp}, 0({temp})\n'
+    if exp_id.tipo == TIPOS_P.CHAR:
+        
+        temp = TS.getNextTemp(0)
+        TS.inst += f'la {temp}, {expId.id}\n'
+        TS.inst += f'lb {temp}, 0({temp})\n'
+    
+    
+    
+#    temp = TS.getNextTemp(0)
+#    TS.inst += f'la {temp}, {expId.id}\n'
+#    TS.inst += f'lw {temp}, 0({temp})\n'
     return temp, exp_id.tipo
 
 
@@ -449,14 +468,14 @@ def ejec_declaracion_explicita(inst,TS):
             cont+=1
             temp = TS.getNextTemp(0)
             TS.inst += f'la {temp},{inst.id}\n'
-            TS.inst += f'sw {exp},0({temp})\n'
+            TS.inst += f'sb {exp},0({temp})\n'
     if inst.tipo == TIPOS_P.CHAR:
         TS.Datos += f'{inst.id}: .byte 0\n'
         if exp!= None:
             cont+=1
             temp = TS.getNextTemp(0)
             TS.inst += f'la {temp},{inst.id}\n'
-            TS.inst += f'sw {exp},0({temp})\n'
+            TS.inst += f'sb {exp},0({temp})\n'
     
     TS.restoreTemp(cont)
  #   TSReporte.agregar(copy.deepcopy(simbolo))
@@ -493,7 +512,14 @@ def ejec_declaracion_implicita(inst,TS):
             cont+=1
             temp = TS.getNextTemp(0)
             TS.inst += f'la {temp},{inst.id}\n'
-            TS.inst += f'sw {exp},0({temp})\n'
+            TS.inst += f'sb {exp},0({temp})\n'
+    if inst.tipo == TIPOS_P.CHAR:
+        TS.Datos += f'{inst.id}: .byte 0\n'
+        if exp!= None:
+            cont+=1
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp},{inst.id}\n'
+            TS.inst += f'sb {exp},0({temp})\n'
     
     TS.restoreTemp(cont)
     
@@ -520,10 +546,26 @@ def ejec_Asignacion(inst,TS):
         listaErrores.append(error(inst.id+" No se puede asignar un tipo de variable diferente",0,0,"Semantico"))
 
     
-    temp = TS.getNextTemp(0)
-    TS.inst += f'la {temp},{inst.id}\n'
-    TS.inst += f'sw {exp},0({temp})\n'
-    TS.actualizar(inst.id,exp)
+    # temp = TS.getNextTemp(0)
+    # TS.inst += f'la {temp},{inst.id}\n'
+    # TS.inst += f'sw {exp},0({temp})\n'
+    # TS.actualizar(inst.id,exp)
+
+    if tipo== TIPOS_P.ENTERO:
+        
+        temp = TS.getNextTemp(0)
+        TS.inst += f'la {temp},{inst.id}\n'
+        TS.inst += f'sw {exp},0({temp})\n'
+    if tipo == TIPOS_P.BOOLEAN:
+        
+        temp = TS.getNextTemp(0)
+        TS.inst += f'la {temp},{inst.id}\n'
+        TS.inst += f'sb {exp},0({temp})\n'
+    if tipo == TIPOS_P.CHAR:
+        
+        temp = TS.getNextTemp(0)
+        TS.inst += f'la {temp},{inst.id}\n'
+        TS.inst += f'sb {exp},0({temp})\n'
     
     TS.restoreTemp(2)
     #TSReporte.actualizar(copy.deepcopy(inst.id),copy.deepcopy(exp))
