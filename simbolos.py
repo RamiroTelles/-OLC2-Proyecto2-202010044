@@ -2,13 +2,13 @@
 
 class Simbolos(): #VALOR - NODO
     
-    def __init__(self, id, tipo_simbolo,tipo, valor,ambito, instrucciones = [], parametros = [],linea=0,columna=0):
+    def __init__(self, id, tipo_simbolo,tipo, valor,ambito, instrucciones = [], parametros = [],RA=0,linea=0,columna=0):
         self.id = id
         self.tipo = tipo
         self.tipo_simbolo =tipo_simbolo
         self.valor = valor
         self.ambito = ambito
-       
+        self.RA=RA
         self.instrucciones = instrucciones
         self.parametros = parametros
         

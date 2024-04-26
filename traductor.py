@@ -31,7 +31,7 @@ def ejec_instrucciones(instrucciones,TS,save=True):
                     #return tupla
                     #pass
                 ejec_controlFlujo(inst,TS)
-            elif isinstance(inst,guardar_func): pass
+            elif isinstance(inst,guardar_func): ejec_Guardar_Func(inst,TS)
                 
         else:
             if isinstance(inst,guardar_func): ejec_Guardar_Func(inst,TS)
@@ -70,19 +70,35 @@ def ejec_Imprimir(inst,TS):
             label1 = TS.getNextLabel()
             label2= TS.getNextLabel()
             TS.inst += f''' beqz {result},L{label1}
+                            addi sp,sp,-4
+	                        sw ra, 0(sp)
                             jal _print_true
+                            lw ra,0(sp)
+	                        addi sp,sp,4
                             j L{label2}
                         L{label1}:
+                            addi sp,sp,-4
+	                        sw ra, 0(sp)
                             jal _print_false
+                            lw ra,0(sp)
+	                        addi sp,sp,4
                         L{label2}:\n'''
         elif isinstance(exp,ExpresionBoleana):
             label1 = TS.getNextLabel()
             label2= TS.getNextLabel()
             TS.inst += f''' beqz {result},L{label1}
+                            addi sp,sp,-4
+	                        sw ra, 0(sp)
                             jal _print_true
+                            lw ra,0(sp)
+	                        addi sp,sp,4
                             j L{label2}
                         L{label1}:
+                            addi sp,sp,-4
+	                        sw ra, 0(sp)
                             jal _print_false
+                            lw ra,0(sp)
+	                        addi sp,sp,4
                         L{label2}:\n'''
         elif isinstance(exp,ExpresionID):
             if tipo==TIPOS_P.ENTERO:
@@ -101,18 +117,56 @@ def ejec_Imprimir(inst,TS):
                 label1 = TS.getNextLabel()
                 label2= TS.getNextLabel()
                 TS.inst += f''' beqz {result},L{label1}
+                                addi sp,sp,-4
+	                            sw ra, 0(sp)
                                 jal _print_true
+                                lw ra,0(sp)
+	                            addi sp,sp,4
                                 j L{label2}
                             L{label1}:
+                                addi sp,sp,-4
+	                            sw ra, 0(sp)
                                 jal _print_false
+                                lw ra,0(sp)
+	                            addi sp,sp,4
+                            L{label2}:\n'''
+        elif isinstance(exp,call_func):
+            if tipo==TIPOS_P.ENTERO:
+                TS.inst += f''' add a0, {result},x0
+                            li a7, 1 
+                            ecall\n'''
+            elif tipo==TIPOS_P.CHAR:
+                TS.inst += f''' la a0, BufferChar
+                            sb {result}, 0(a0)
+                            la a1, BufferChar
+                            li a2, 1
+                            li a0, 1 
+                            li a7, 64 
+                            ecall\n'''
+            elif tipo==TIPOS_P.BOOLEAN:
+                label1 = TS.getNextLabel()
+                label2= TS.getNextLabel()
+                TS.inst += f''' beqz {result},L{label1}
+                                addi sp,sp,-4
+	                            sw ra, 0(sp)
+                                jal _print_true
+                                lw ra,0(sp)
+	                            addi sp,sp,4
+                                j L{label2}
+                            L{label1}:
+                                addi sp,sp,-4
+	                            sw ra, 0(sp)
+                                jal _print_false
+                                lw ra,0(sp)
+	                            addi sp,sp,4
                             L{label2}:\n'''
         
         #Luego Escribe salto de linea
-        TS.inst  += f'''la a1, msgSalto
-                        li a2,1
-                        li a0,1
-                        li a7,64
-                        ecall\n'''
+    TS.inst  += f'''la a1, msgSalto
+                    li a2,1
+                    li a0,1
+                    li a7,64
+                    ecall\n'''
             
         # elif isinstance(inst.cad, ExpresionID):
         #     temporal = ts.generateTemporal()
@@ -155,9 +209,8 @@ def ejec_expresion(exp,TS):
         
         return resolver_expresionId(exp,TS)
     elif isinstance(exp,call_func):
-        tupla =ejec_Funcion(exp,TS)
-        if tupla!=None:
-            return tupla[1]
+        return ejec_Funcion_exp(exp,TS)
+       
     elif isinstance(exp,ExpresionArray):
         return resolver_expresionArray(exp,TS)
     elif isinstance(exp,Expresion_AccesoArray):
@@ -403,21 +456,48 @@ def resolver_expresionId(expId,TS):
         print("Se quiere usar valor null con variable "+expId.id)
         return
     
-    if exp_id.tipo== TIPOS_P.ENTERO:
-        
-        temp = TS.getNextTemp(0)
-        TS.inst += f'la {temp}, {expId.id}\n'
-        TS.inst += f'lw {temp}, 0({temp})\n'
-    if exp_id.tipo == TIPOS_P.BOOLEAN:
-        
-        temp = TS.getNextTemp(0)
-        TS.inst += f'la {temp}, {expId.id}\n'
-        TS.inst += f'lb {temp}, 0({temp})\n'
-    if exp_id.tipo == TIPOS_P.CHAR:
-        
-        temp = TS.getNextTemp(0)
-        TS.inst += f'la {temp}, {expId.id}\n'
-        TS.inst += f'lb {temp}, 0({temp})\n'
+    
+    
+    #if TS.ambito=="Local":
+    if exp_id.ambito=="Local":
+
+#       lw t0, 0(sp) # obtener var +8
+        if exp_id.tipo== TIPOS_P.ENTERO:
+            
+            temp = TS.getNextTemp(0)
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - exp_id.RA 
+
+            TS.inst += f'lw {temp}, {offset}(sp)\n'
+        if exp_id.tipo == TIPOS_P.BOOLEAN:
+            
+            temp = TS.getNextTemp(0)
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - exp_id.RA 
+
+            TS.inst += f'lb {temp}, {offset}(sp)\n'
+        if exp_id.tipo == TIPOS_P.CHAR:
+            
+            temp = TS.getNextTemp(0)
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - exp_id.RA 
+
+            TS.inst += f'lb {temp}, {offset}(sp)\n'
+    else:
+
+
+        if exp_id.tipo== TIPOS_P.ENTERO:
+            
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp}, {expId.id}\n'
+            TS.inst += f'lw {temp}, 0({temp})\n'
+        if exp_id.tipo == TIPOS_P.BOOLEAN:
+            
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp}, {expId.id}\n'
+            TS.inst += f'lb {temp}, 0({temp})\n'
+        if exp_id.tipo == TIPOS_P.CHAR:
+            
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp}, {expId.id}\n'
+            TS.inst += f'lb {temp}, 0({temp})\n'
     
     
     
@@ -431,16 +511,30 @@ def ejec_declaracion_explicita(inst,TS):
     cont=1
     exp,tipo = ejec_expresion(inst.valor,TS)
 
+   
+
+
     if TS.obtener(inst.id)!=None:
         print("Ya declarada variable "+inst.id)
         listaErrores.append(error("Ya declarada variable "+inst.id,0,0,"Semantico"))
         #return
  
-    if inst.tipo != tipo:
+    if inst.tipo != tipo and exp!=None:
         print("Asignacion equivocada de tipos "+inst.id)
         listaErrores.append(error("Asignacion equivocada de tipos "+inst.id,0,0,"Semantico"))
         #aqui se pondria que se asigna null
         return
+    
+    if len(PilaDisplay)!=0:
+        RA_var = PilaDisplay[len(PilaDisplay)-1].RA
+        if tipo== TIPOS_P.ENTERO:
+            PilaDisplay[len(PilaDisplay)-1].RA+=4
+        elif inst.tipo == TIPOS_P.BOOLEAN:
+            PilaDisplay[len(PilaDisplay)-1].RA+=1
+        elif inst.tipo == TIPOS_P.CHAR:
+            PilaDisplay[len(PilaDisplay)-1].RA+=1
+    else:
+        RA_var =0
 
     if inst.const == True:
         if exp==None:
@@ -448,36 +542,63 @@ def ejec_declaracion_explicita(inst,TS):
             listaErrores.append(error("No asigno valor a const "+inst.id,0,0,"Semantico"))
             return
         else:
-            simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.CONSTANTE,tipo=inst.tipo,valor=exp,ambito=TS.ambito,linea=inst.linea,columna=inst.columna)
+            simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.CONSTANTE,tipo=inst.tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
     elif inst.arrayList!=0:
-        simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.ARRAY,tipo=inst.tipo,valor=exp,ambito=TS.ambito,linea=inst.linea,columna=inst.columna)
+        simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.ARRAY,tipo=inst.tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
     else:
-        simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.VARIABLE,tipo=inst.tipo,valor=exp,ambito=TS.ambito,linea=inst.linea,columna=inst.columna)
+        simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.VARIABLE,tipo=inst.tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
         
     TS.agregar(simbolo)
-    if inst.tipo == TIPOS_P.ENTERO:
-        TS.Datos += f'{inst.id}: .word 0\n'
-        if exp!= None:
-            cont+=1
-            temp = TS.getNextTemp(0)
-            TS.inst += f'la {temp},{inst.id}\n'
-            TS.inst += f'sw {exp},0({temp})\n'
-    if inst.tipo == TIPOS_P.BOOLEAN:
-        TS.Datos += f'{inst.id}: .byte 1\n'
-        if exp!= None:
-            cont+=1
-            temp = TS.getNextTemp(0)
-            TS.inst += f'la {temp},{inst.id}\n'
-            TS.inst += f'sb {exp},0({temp})\n'
-    if inst.tipo == TIPOS_P.CHAR:
-        TS.Datos += f'{inst.id}: .byte 0\n'
-        if exp!= None:
-            cont+=1
-            temp = TS.getNextTemp(0)
-            TS.inst += f'la {temp},{inst.id}\n'
-            TS.inst += f'sb {exp},0({temp})\n'
+    if TS.ambito=="Local":
+        # addi sp,sp,-4 #creacion var
+        # addi t1,x0,0
+        # sw t1,0(sp)
+        if inst.tipo== TIPOS_P.ENTERO:
+          
+           TS.inst+= f'addi sp,sp,-4\n'
+           
+           TS.inst+= f'sw x0,0(sp)\n'
+           if exp!=None:
+               TS.inst+= f'sw {exp},0(sp)\n'
+           
+        elif inst.tipo == TIPOS_P.BOOLEAN:
+            TS.inst+= f'addi sp,sp,-1\n'
+            TS.inst+= f'addi a0,x0,1\n'
+            TS.inst+= f'sb a0,0(sp)\n'
+            if exp!=None:
+                TS.inst+= f'sb {exp},0(sp)\n'
+        elif inst.tipo == TIPOS_P.CHAR:
+            TS.inst+= f'addi sp,sp,-1\n'
+            
+            TS.inst+= f'sb x0,0(sp)\n'
+            if exp!=None:
+                TS.inst+= f'sb {exp},0(sp)\n'
+        TS.restoreTemp(cont)
+    else:
+
+        if inst.tipo == TIPOS_P.ENTERO:
+            TS.Datos += f'{inst.id}: .word 0\n'
+            if exp!= None:
+                cont+=1
+                temp = TS.getNextTemp(0)
+                TS.inst += f'la {temp},{inst.id}\n'
+                TS.inst += f'sw {exp},0({temp})\n'
+        if inst.tipo == TIPOS_P.BOOLEAN:
+            TS.Datos += f'{inst.id}: .byte 1\n'
+            if exp!= None:
+                cont+=1
+                temp = TS.getNextTemp(0)
+                TS.inst += f'la {temp},{inst.id}\n'
+                TS.inst += f'sb {exp},0({temp})\n'
+        if inst.tipo == TIPOS_P.CHAR:
+            TS.Datos += f'{inst.id}: .byte 0\n'
+            if exp!= None:
+                cont+=1
+                temp = TS.getNextTemp(0)
+                TS.inst += f'la {temp},{inst.id}\n'
+                TS.inst += f'sb {exp},0({temp})\n'
     
-    TS.restoreTemp(cont)
+        TS.restoreTemp(cont)
  #   TSReporte.agregar(copy.deepcopy(simbolo))
 
 def ejec_declaracion_implicita(inst,TS):
@@ -487,6 +608,17 @@ def ejec_declaracion_implicita(inst,TS):
         print("Ya declarada variable "+inst.id)
         listaErrores.append(error("Ya declarada variable "+inst.id,0,0,"Semantico"))
         return
+    
+    if len(PilaDisplay)!=0:
+        RA_var = PilaDisplay[len(PilaDisplay)-1].RA
+        if tipo== TIPOS_P.ENTERO:
+            PilaDisplay[len(PilaDisplay)-1].RA+=4
+        elif inst.tipo == TIPOS_P.BOOLEAN:
+            PilaDisplay[len(PilaDisplay)-1].RA+=1
+        elif inst.tipo == TIPOS_P.CHAR:
+            PilaDisplay[len(PilaDisplay)-1].RA+=1
+    else:
+        RA_var =0
 
     if inst.const == True:
         if exp==None:
@@ -494,34 +626,61 @@ def ejec_declaracion_implicita(inst,TS):
             listaErrores.append(error("No asigno valor a const "+inst.id,0,0,"Semantico"))
             return
         else:
-            simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.CONSTANTE,tipo=tipo,valor=exp,ambito=TS.ambito,linea=inst.linea,columna=inst.columna)
+            simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.CONSTANTE,tipo=tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
     else:
-        simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.VARIABLE,tipo=tipo,valor=exp,ambito=TS.ambito,linea=inst.linea,columna=inst.columna)
+        simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.VARIABLE,tipo=tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
     TS.agregar(simbolo)
 
-    if tipo== TIPOS_P.ENTERO:
-        TS.Datos += f'{inst.id}: .word 0\n'
-        if exp!= None:
-            cont+=1
-            temp = TS.getNextTemp(0)
-            TS.inst += f'la {temp},{inst.id}\n'
-            TS.inst += f'sw {exp},0({temp})\n'
-    if inst.tipo == TIPOS_P.BOOLEAN:
-        TS.Datos += f'{inst.id}: .byte 1\n'
-        if exp!= None:
-            cont+=1
-            temp = TS.getNextTemp(0)
-            TS.inst += f'la {temp},{inst.id}\n'
-            TS.inst += f'sb {exp},0({temp})\n'
-    if inst.tipo == TIPOS_P.CHAR:
-        TS.Datos += f'{inst.id}: .byte 0\n'
-        if exp!= None:
-            cont+=1
-            temp = TS.getNextTemp(0)
-            TS.inst += f'la {temp},{inst.id}\n'
-            TS.inst += f'sb {exp},0({temp})\n'
-    
-    TS.restoreTemp(cont)
+    if TS.ambito=="Local":
+        # addi sp,sp,-4 #creacion var
+        # addi t1,x0,0
+        # sw t1,0(sp)
+        if tipo== TIPOS_P.ENTERO:
+          
+           TS.inst+= f'addi sp,sp,-4\n'
+           
+           TS.inst+= f'sw x0,0(sp)\n'
+           if exp!=None:
+               TS.inst+= f'sw {exp},0(sp)\n'
+           
+        elif tipo == TIPOS_P.BOOLEAN:
+            TS.inst+= f'addi sp,sp,-1\n'
+            TS.inst+= f'addi a0,x0,1\n'
+            TS.inst+= f'sb a0,0(sp)\n'
+            if exp!=None:
+                TS.inst+= f'sb {exp},0(sp)\n'
+        elif tipo == TIPOS_P.CHAR:
+            TS.inst+= f'addi sp,sp,-1\n'
+            
+            TS.inst+= f'sb x0,0(sp)\n'
+            if exp!=None:
+                TS.inst+= f'sb {exp},0(sp)\n'
+        TS.restoreTemp(cont)
+    else:
+
+        if tipo== TIPOS_P.ENTERO:
+            TS.Datos += f'{inst.id}: .word 0\n'
+            if exp!= None:
+                cont+=1
+                temp = TS.getNextTemp(0)
+                TS.inst += f'la {temp},{inst.id}\n'
+                TS.inst += f'sw {exp},0({temp})\n'
+        elif tipo == TIPOS_P.BOOLEAN:
+            TS.Datos += f'{inst.id}: .byte 1\n'
+            if exp!= None:
+                cont+=1
+                temp = TS.getNextTemp(0)
+                TS.inst += f'la {temp},{inst.id}\n'
+                TS.inst += f'sb {exp},0({temp})\n'
+        elif tipo == TIPOS_P.CHAR:
+            TS.Datos += f'{inst.id}: .byte 0\n'
+            if exp!= None:
+                cont+=1
+                temp = TS.getNextTemp(0)
+                TS.inst += f'la {temp},{inst.id}\n'
+                TS.inst += f'sb {exp},0({temp})\n'
+        
+        TS.restoreTemp(cont)
     
     #TSReporte.agregar(copy.deepcopy(simbolo))
 
@@ -551,23 +710,44 @@ def ejec_Asignacion(inst,TS):
     # TS.inst += f'sw {exp},0({temp})\n'
     # TS.actualizar(inst.id,exp)
 
-    if tipo== TIPOS_P.ENTERO:
+    #if TS.ambito=="Local":
+    if simbolo.ambito =="Local":
+
+#        sw t0,0(sp) # asignacion
+        if tipo== TIPOS_P.ENTERO:
+            
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - simbolo.RA
+            TS.inst += f'sw {exp},{offset}(sp)\n'
+        if tipo == TIPOS_P.BOOLEAN:
+            
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -1 - simbolo.RA
+            TS.inst += f'sw {exp},{offset}(sp)\n'
+        if tipo == TIPOS_P.CHAR:
+            
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -1 - simbolo.RA
+            TS.inst += f'sw {exp},{offset}(sp)\n'
         
-        temp = TS.getNextTemp(0)
-        TS.inst += f'la {temp},{inst.id}\n'
-        TS.inst += f'sw {exp},0({temp})\n'
-    if tipo == TIPOS_P.BOOLEAN:
+        TS.restoreTemp(1)
         
-        temp = TS.getNextTemp(0)
-        TS.inst += f'la {temp},{inst.id}\n'
-        TS.inst += f'sb {exp},0({temp})\n'
-    if tipo == TIPOS_P.CHAR:
+    else:
+
+        if tipo== TIPOS_P.ENTERO:
+            
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp},{inst.id}\n'
+            TS.inst += f'sw {exp},0({temp})\n'
+        if tipo == TIPOS_P.BOOLEAN:
+            
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp},{inst.id}\n'
+            TS.inst += f'sb {exp},0({temp})\n'
+        if tipo == TIPOS_P.CHAR:
+            
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp},{inst.id}\n'
+            TS.inst += f'sb {exp},0({temp})\n'
         
-        temp = TS.getNextTemp(0)
-        TS.inst += f'la {temp},{inst.id}\n'
-        TS.inst += f'sb {exp},0({temp})\n'
-    
-    TS.restoreTemp(2)
+        TS.restoreTemp(2)
     #TSReporte.actualizar(copy.deepcopy(inst.id),copy.deepcopy(exp))
 
 
@@ -618,7 +798,45 @@ def ejec_controlFlujo(inst,TS):
         listaErrores.append(error("Break no dentro de un ciclo o switch",0,0,"Semantico"))
         
     elif isinstance(inst,inst_Return):
-        return inst,ejec_expresion(inst.valor,TS) 
+        #fun_ = TS.obtener(PilaDisplay[len(PilaDisplay)-1].func)
+
+        exp,tipo=ejec_expresion(inst.valor,TS)
+
+        if exp==None:
+            TS.inst+="ret\n"
+            return
+
+        if tipo!=PilaDisplay[len(PilaDisplay)-1].tipo:
+            return
+
+
+        if tipo == TIPOS_P.ENTERO:
+            retorno = TS.obtener(PilaDisplay[len(PilaDisplay)-1].func+"Return")
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - retorno.RA
+            
+            #TS.inst+= f'addi sp,sp,-4\n'
+            TS.inst+= f'sw {exp}, {offset}(sp)\n'
+            TS.inst+="ret\n"
+            
+        elif tipo== TIPOS_P.BOOLEAN:
+            retorno = TS.obtener(PilaDisplay[len(PilaDisplay)-1].func+"Return")
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - retorno.RA
+
+            #TS.inst+= f'addi sp,sp,-1\n'
+            TS.inst+= f'sb {exp}, {offset}(sp)\n'
+            TS.inst+="ret\n"
+            
+        elif tipo== TIPOS_P.CHAR:
+            retorno = TS.obtener(PilaDisplay[len(PilaDisplay)-1].func+"Return")
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - retorno.RA
+
+            #TS.inst+= f'addi sp,sp,-1\n'
+            TS.inst+= f'sb {exp}, {offset}(sp)\n'
+            TS.inst+="ret\n"
+            
+
+
+        #return inst,ejec_expresion(inst.valor,TS) 
     
 def ejec_If(inst,TS):
     PilaDisplay.append(display("","",0))
@@ -909,39 +1127,125 @@ def ejec_Switch(inst,TS):
 # Lsalida:
 
 def ejec_Guardar_Func(inst,TS):
+    PilaDisplay.append(display("","",0,inst.id,inst.tipo))
+    TS.ambito= "Local"
     sim =TS.obtener(inst.id)
     if sim!=None:
         if sim.tipo_simbolo==TIPOS_Simbolos.FUNCION:
             print("Ya declarada Funcion "+inst.id)
             listaErrores.append(error("Ya declarada Funcion "+inst.id,0,0,"Semantico"))
             return
-    
-    simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.FUNCION,tipo=inst.tipo,valor=None,ambito=TS.ambito,parametros=inst.listaParametros,instrucciones=inst.instrucciones)
+        
+    if inst.tipo == TIPOS_P.ENTERO:
+        simboloReturn = Simbolos(inst.id+"Return",TIPOS_Simbolos.VARIABLE,inst.tipo,None,TS.ambito,RA=PilaDisplay[len(PilaDisplay)-1].RA)
+        PilaDisplay[len(PilaDisplay)-1].RA+=4
+        TS.agregar(simboloReturn)
+    elif inst.tipo  == TIPOS_P.BOOLEAN:
+        simboloReturn = Simbolos(inst.id+"Return",TIPOS_Simbolos.VARIABLE,inst.tipo,None,TS.ambito,RA=PilaDisplay[len(PilaDisplay)-1].RA)
+        PilaDisplay[len(PilaDisplay)-1].RA+=1
+        TS.agregar(simboloReturn)
+    elif inst.tipo  == TIPOS_P.CHAR:
+        simboloReturn = Simbolos(inst.id+"Return",TIPOS_Simbolos.VARIABLE,inst.tipo,None,TS.ambito,RA=PilaDisplay[len(PilaDisplay)-1].RA)
+        PilaDisplay[len(PilaDisplay)-1].RA+=1
+        TS.agregar(simboloReturn)
 
-    TS.agregar(simbolo)
+    for elem in inst.listaParametros:
+        if elem.tipo == TIPOS_P.ENTERO:
+            
+            simbolo1 = Simbolos(elem.id,TIPOS_Simbolos.VARIABLE,elem.tipo,None,TS.ambito,RA=PilaDisplay[len(PilaDisplay)-1].RA)
+            PilaDisplay[len(PilaDisplay)-1].RA+=4
+            TS.agregar(simbolo1)
+        elif elem.tipo == TIPOS_P.CHAR:
+            simbolo1 = Simbolos(elem.id,TIPOS_Simbolos.VARIABLE,elem.tipo,None,TS.ambito,RA=PilaDisplay[len(PilaDisplay)-1].RA)
+            PilaDisplay[len(PilaDisplay)-1].RA+=1
+            TS.agregar(simbolo1)
+        elif elem.tipo == TIPOS_P.BOOLEAN:
+            simbolo1 = Simbolos(elem.id,TIPOS_Simbolos.VARIABLE,elem.tipo,None,TS.ambito,RA=PilaDisplay[len(PilaDisplay)-1].RA)
+            PilaDisplay[len(PilaDisplay)-1].RA+=1
+            TS.agregar(simbolo1)
+        
+    Lsiguiente=f'L{TS.getNextLabel()}'
+    TS.inst += f'j {Lsiguiente}\n'
+    TS.inst += f'{inst.id}:\n'
+
+    ejec_instrucciones(inst.instrucciones,TS)
+    TS.inst += 'ret\n'
+    TS.inst += f'{Lsiguiente}:\n'
     
-    TSReporte.agregar(copy.deepcopy(simbolo))
+    fun_ = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.FUNCION,tipo=inst.tipo,valor=None,ambito=TS.ambito,parametros=inst.listaParametros,instrucciones=inst.instrucciones,RA=PilaDisplay[len(PilaDisplay)-1].RA)
+
+    TS.agregar(fun_)
+
+    PilaDisplay.pop()
+    TS.ambito= "Global"
+    
+    #TSReporte.agregar(copy.deepcopy(simbolo))
+
+#     j Lsiguiente
+# _saludar1:
+    
+#     	la a1,msg0
+#     	la a0,msg0len
+#     	lw a2, 0(a0)
+#     	li a0,1
+#     	li a7,64
+#     	ecall
+    	
+#     	ret
+# Lsiguiente:
 
 
 def ejec_Funcion(inst,TS):
-    fun_ = TS.obtener(inst.id).instrucciones
-    params_ = TS.obtener(inst.id).parametros
-    TablaLocal = copy.deepcopy(TS)
-    TablaLocal.ambito = inst.id
-    for i in range(len(inst.listaParametros)):
+    fun_ = TS.obtener(inst.id)
+    param = inst.listaParametros
+    if fun_==None:
+        print("Funcion no existente "+inst.id)
+        listaErrores.append(error("Funcion no existente "+inst.id,0,0,"Semantico"))
+    #params_ = TS.obtener(inst.id).parametros
 
-        exp = ejec_expresion(inst.listaParametros[i], TS)
 
-        #aqui poner si es array o nel
+    TS.inst += f'addi sp,sp,-4\n'
+    TS.inst += f'sw ra, 0(sp)\n'
+   
+    if fun_.tipo == TIPOS_P.ENTERO:
+        TS.inst += f'addi sp,sp,-4\n'
+    elif fun_.tipo == TIPOS_P.BOOLEAN:
+        TS.inst += f'addi sp,sp,-1\n'
+    elif fun_.tipo == TIPOS_P.CHAR:
+        TS.inst += f'addi sp,sp,-1\n'
 
-        TablaLocal.agregar(Simbolos(params_[i].id,TIPOS_Simbolos.VARIABLE,params_[i].tipo,copy.deepcopy(exp),TablaLocal.ambito))
+    for i in range(0,len(param)):
+        exp,tipo = ejec_expresion(param[i],TS)
+        TS.inst += f'addi sp,sp,-4\n'
+        TS.inst += f'sw {exp}, 0(sp)\n'
+
+    TS.inst += f'call {inst.id}\n'
+    TS.inst += f'addi sp,sp,{fun_.RA}\n'
+    TS.inst += f'lw ra ,0(sp)\n'
+    TS.inst += f'addi sp,sp,4\n'
+
+    # TablaLocal = copy.deepcopy(TS)
+    # TablaLocal.ambito = inst.id
+    # for i in range(len(inst.listaParametros)):
+
+    #     exp = ejec_expresion(inst.listaParametros[i], TS)
+
+    #     #aqui poner si es array o nel
+
+    #     TablaLocal.agregar(Simbolos(params_[i].id,TIPOS_Simbolos.VARIABLE,params_[i].tipo,copy.deepcopy(exp),TablaLocal.ambito))
         
         
 
-    tupla = ejec_instrucciones(fun_, TablaLocal)
-    #print(tupla)
-    if tupla!= None:
-        return tupla
+    # tupla = ejec_instrucciones(fun_, TablaLocal)
+    # #print(tupla)
+    # if tupla!= None:
+    #     return tupla
+    
+    # addi sp,sp,-4
+	# sw ra, 0(sp)
+	# call _saludar1
+	# lw ra ,0(sp)
+	# addi sp,sp,4
     
 def resolver_expresionArray(exp,TS):
     resultado = []
@@ -1235,3 +1539,47 @@ def resolver_expresion_AccesoMatriz(exp,TS):
         listaErrores.append(error("Error al acceder al valor de Array "+exp.id,0,0,"Semantico"))
         return
     return temp
+
+def ejec_Funcion_exp(inst,TS):
+    fun_ = TS.obtener(inst.id)
+    param = inst.listaParametros
+    if fun_==None:
+        print("Funcion no existente "+inst.id)
+        listaErrores.append(error("Funcion no existente "+inst.id,0,0,"Semantico"))
+    #params_ = TS.obtener(inst.id).parametros
+
+
+    TS.inst += f'addi sp,sp,-4\n'
+    TS.inst += f'sw ra, 0(sp)\n'
+
+    if fun_.tipo == TIPOS_P.ENTERO:
+        TS.inst += f'addi sp,sp,-4\n'
+    elif fun_.tipo == TIPOS_P.BOOLEAN:
+        TS.inst += f'addi sp,sp,-1\n'
+    elif fun_.tipo == TIPOS_P.CHAR:
+        TS.inst += f'addi sp,sp,-1\n'
+
+    for i in range(0,len(param)):
+        exp,tipo = ejec_expresion(param[i],TS)
+        TS.inst += f'addi sp,sp,-4\n'
+        TS.inst += f'sw {exp}, 0(sp)\n'
+
+    TS.inst += f'call {inst.id}\n'
+    temp= TS.getNextTemp(0)
+    if fun_.tipo==TIPOS_P.ENTERO:
+        retorno = TS.obtener(fun_.id+"Return")
+        offset = fun_.RA -4 - retorno.RA
+        TS.inst += f'lw {temp},{offset}(sp)\n'
+    elif fun_.tipo ==TIPOS_P.BOOLEAN:
+        retorno = TS.obtener(fun_.id+"Return")
+        offset = fun_.RA -4 - retorno.RA
+        TS.inst += f'lb {temp},{offset}(sp)\n'
+    elif fun_.tipo ==TIPOS_P.CHAR:
+        retorno = TS.obtener(fun_.id+"Return")
+        offset = fun_.RA -4 - retorno.RA
+        TS.inst += f'lb {temp},{offset}(sp)\n'
+    TS.inst += f'addi sp,sp,{fun_.RA}\n'
+    TS.inst += f'lw ra ,0(sp)\n'
+    TS.inst += f'addi sp,sp,4\n'
+
+    return temp,fun_.tipo
