@@ -1136,6 +1136,7 @@ def ejec_Guardar_Func(inst,TS):
             listaErrores.append(error("Ya declarada Funcion "+inst.id,0,0,"Semantico"))
             return
         
+    
     if inst.tipo == TIPOS_P.ENTERO:
         simboloReturn = Simbolos(inst.id+"Return",TIPOS_Simbolos.VARIABLE,inst.tipo,None,TS.ambito,RA=PilaDisplay[len(PilaDisplay)-1].RA)
         PilaDisplay[len(PilaDisplay)-1].RA+=4
@@ -1167,6 +1168,10 @@ def ejec_Guardar_Func(inst,TS):
     Lsiguiente=f'L{TS.getNextLabel()}'
     TS.inst += f'j {Lsiguiente}\n'
     TS.inst += f'{inst.id}:\n'
+
+    fun_ = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.FUNCION,tipo=inst.tipo,valor=None,ambito=TS.ambito,parametros=inst.listaParametros,instrucciones=inst.instrucciones,RA=PilaDisplay[len(PilaDisplay)-1].RA)
+
+    TS.agregar(fun_)
 
     ejec_instrucciones(inst.instrucciones,TS)
     TS.inst += 'ret\n'
