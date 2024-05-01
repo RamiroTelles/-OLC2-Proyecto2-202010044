@@ -7,6 +7,10 @@ class TIPOS_P(Enum):
     BOOLEAN=4
     CHAR=5
     VOID=6
+    ARRAY_INT=7
+    ARRAY_CHAR=8
+    ARRAY_BOOLEAN=9
+    ARRAY_STRING=10
    
 
 

@@ -47,7 +47,89 @@ def ejec_Imprimir(inst,TS):
         result,tipo = ejec_expresion(exp,TS)
         
 
-        if isinstance(exp, ExpresionDobleComilla) :
+        if isinstance(exp,ExpresionArray):
+
+            if tipo ==TIPOS_P.ARRAY_INT:
+
+                TS.inst+= f'''   addi sp,sp,-4
+                                sw ra,0(sp)
+                                addi sp,sp,-16
+                                sw t0, 0(sp)
+                                sw t1,4(sp)
+                                sw t2, 8(sp)
+                                sw t3,12(sp)
+                                
+                                add t0,x0,{result}
+                                call _print_Array_Int
+                                lw t0,0(sp)
+                                lw t1,4(sp)
+                                lw t2,8(sp)
+                                lw t3,12(sp)
+                                addi sp,sp,16
+                                lw ra,0(sp)
+                                addi sp,sp,4\n'''
+            elif tipo ==TIPOS_P.ARRAY_CHAR:
+
+                TS.inst+= f'''   addi sp,sp,-4
+                                sw ra,0(sp)
+                                addi sp,sp,-16
+                                sw t0, 0(sp)
+                                sw t1,4(sp)
+                                sw t2, 8(sp)
+                                sw t3,12(sp)
+                                
+                                add t0,x0,{result}
+                                call _print_Array_Char
+                                lw t0,0(sp)
+                                lw t1,4(sp)
+                                lw t2,8(sp)
+                                lw t3,12(sp)
+                                addi sp,sp,16
+                                lw ra,0(sp)
+                                addi sp,sp,4\n'''
+                
+            elif tipo ==TIPOS_P.ARRAY_BOOLEAN:
+
+                TS.inst+= f'''   addi sp,sp,-4
+                                sw ra,0(sp)
+                                addi sp,sp,-16
+                                sw t0, 0(sp)
+                                sw t1,4(sp)
+                                sw t2, 8(sp)
+                                sw t3,12(sp)
+                                
+                                add t0,x0,{result}
+                                call _print_Array_Bool
+                                lw t0,0(sp)
+                                lw t1,4(sp)
+                                lw t2,8(sp)
+                                lw t3,12(sp)
+                                addi sp,sp,16
+                                lw ra,0(sp)
+                                addi sp,sp,4\n'''
+            #Print Array int
+	
+	# addi sp,sp,-4
+	# sw ra,0(sp)
+	# addi sp,sp,-16
+	# sw t0, 0(sp)
+	# sw t1,4(sp)
+	# sw t2, 8(sp)
+	# sw t3,12(sp)
+	
+	# la t0, Arr2
+	# lw t0, Arr2
+	
+	# call _print_Array_Int
+	# lw t0,0(sp)
+	# lw t1,4(sp)
+	# lw t2,8(sp)
+	# lw t3,12(sp)
+	# addi sp,sp,16
+	# lw ra,0(sp)
+	# addi sp,sp,4
+	
+        elif isinstance(exp, ExpresionDobleComilla) :
             TS.inst += f'''la a1, {result}
                             la a0, {result}len
                             lw a2, 0(a0)
@@ -130,6 +212,63 @@ def ejec_Imprimir(inst,TS):
                                 lw ra,0(sp)
 	                            addi sp,sp,4
                             L{label2}:\n'''
+            elif tipo==TIPOS_P.ARRAY_INT:
+                TS.inst+= f'''   addi sp,sp,-4
+                                sw ra,0(sp)
+                                addi sp,sp,-16
+                                sw t0, 0(sp)
+                                sw t1,4(sp)
+                                sw t2, 8(sp)
+                                sw t3,12(sp)
+                                
+                                add t0,x0,{result}
+                                call _print_Array_Int
+                                lw t0,0(sp)
+                                lw t1,4(sp)
+                                lw t2,8(sp)
+                                lw t3,12(sp)
+                                addi sp,sp,16
+                                lw ra,0(sp)
+                                addi sp,sp,4\n'''
+            elif tipo==TIPOS_P.ARRAY_CHAR:
+                TS.inst+= f'''   addi sp,sp,-4
+                                sw ra,0(sp)
+                                addi sp,sp,-16
+                                sw t0, 0(sp)
+                                sw t1,4(sp)
+                                sw t2, 8(sp)
+                                sw t3,12(sp)
+                                
+                                add t0,x0,{result}
+                                call _print_Array_Char
+                                lw t0,0(sp)
+                                lw t1,4(sp)
+                                lw t2,8(sp)
+                                lw t3,12(sp)
+                                addi sp,sp,16
+                                lw ra,0(sp)
+                                addi sp,sp,4\n'''
+            elif tipo==TIPOS_P.ARRAY_STRING:
+                pass
+            elif tipo==TIPOS_P.ARRAY_BOOLEAN:
+                TS.inst+= f'''   addi sp,sp,-4
+                                sw ra,0(sp)
+                                addi sp,sp,-16
+                                sw t0, 0(sp)
+                                sw t1,4(sp)
+                                sw t2, 8(sp)
+                                sw t3,12(sp)
+                                
+                                add t0,x0,{result}
+                                call _print_Array_Bool
+                                lw t0,0(sp)
+                                lw t1,4(sp)
+                                lw t2,8(sp)
+                                lw t3,12(sp)
+                                addi sp,sp,16
+                                lw ra,0(sp)
+                                addi sp,sp,4\n'''
+                
         elif isinstance(exp,call_func):
             if tipo==TIPOS_P.ENTERO:
                 TS.inst += f''' add a0, {result},x0
@@ -160,6 +299,62 @@ def ejec_Imprimir(inst,TS):
                                 lw ra,0(sp)
 	                            addi sp,sp,4
                             L{label2}:\n'''
+            elif tipo==TIPOS_P.ARRAY_INT:
+                TS.inst+= f'''   addi sp,sp,-4
+                                sw ra,0(sp)
+                                addi sp,sp,-16
+                                sw t0, 0(sp)
+                                sw t1,4(sp)
+                                sw t2, 8(sp)
+                                sw t3,12(sp)
+                                
+                                add t0,x0,{result}
+                                call _print_Array_Int
+                                lw t0,0(sp)
+                                lw t1,4(sp)
+                                lw t2,8(sp)
+                                lw t3,12(sp)
+                                addi sp,sp,16
+                                lw ra,0(sp)
+                                addi sp,sp,4\n'''
+            elif tipo==TIPOS_P.ARRAY_CHAR:
+                TS.inst+= f'''   addi sp,sp,-4
+                                sw ra,0(sp)
+                                addi sp,sp,-16
+                                sw t0, 0(sp)
+                                sw t1,4(sp)
+                                sw t2, 8(sp)
+                                sw t3,12(sp)
+                                
+                                add t0,x0,{result}
+                                call _print_Array_Char
+                                lw t0,0(sp)
+                                lw t1,4(sp)
+                                lw t2,8(sp)
+                                lw t3,12(sp)
+                                addi sp,sp,16
+                                lw ra,0(sp)
+                                addi sp,sp,4\n'''
+            elif tipo==TIPOS_P.ARRAY_STRING:
+                pass
+            elif tipo==TIPOS_P.ARRAY_BOOLEAN:
+                TS.inst+= f'''   addi sp,sp,-4
+                                sw ra,0(sp)
+                                addi sp,sp,-16
+                                sw t0, 0(sp)
+                                sw t1,4(sp)
+                                sw t2, 8(sp)
+                                sw t3,12(sp)
+                                
+                                add t0,x0,{result}
+                                call _print_Array_Bool
+                                lw t0,0(sp)
+                                lw t1,4(sp)
+                                lw t2,8(sp)
+                                lw t3,12(sp)
+                                addi sp,sp,16
+                                lw ra,0(sp)
+                                addi sp,sp,4\n'''
         
         #Luego Escribe salto de linea
     TS.inst  += f'''la a1, msgSalto
@@ -461,43 +656,66 @@ def resolver_expresionId(expId,TS):
     #if TS.ambito=="Local":
     if exp_id.ambito=="Local":
 
-#       lw t0, 0(sp) # obtener var +8
-        if exp_id.tipo== TIPOS_P.ENTERO:
+
+        if exp_id.tipo_simbolo== TIPOS_Simbolos.ARRAY:
             
             temp = TS.getNextTemp(0)
             offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - exp_id.RA 
 
             TS.inst += f'lw {temp}, {offset}(sp)\n'
-        if exp_id.tipo == TIPOS_P.BOOLEAN:
+#       lw t0, 0(sp) # obtener var +8
+        elif exp_id.tipo== TIPOS_P.ENTERO:
+            
+            temp = TS.getNextTemp(0)
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - exp_id.RA 
+
+            TS.inst += f'lw {temp}, {offset}(sp)\n'
+        elif exp_id.tipo == TIPOS_P.BOOLEAN:
             
             temp = TS.getNextTemp(0)
             offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - exp_id.RA 
 
             TS.inst += f'lb {temp}, {offset}(sp)\n'
-        if exp_id.tipo == TIPOS_P.CHAR:
+        elif exp_id.tipo == TIPOS_P.CHAR:
             
             temp = TS.getNextTemp(0)
             offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - exp_id.RA 
 
             TS.inst += f'lb {temp}, {offset}(sp)\n'
+        elif exp_id.tipo== TIPOS_P.CADENA:
+            
+            temp = TS.getNextTemp(0)
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - exp_id.RA 
+
+            TS.inst += f'lw {temp}, {offset}(sp)\n'
     else:
 
-
-        if exp_id.tipo== TIPOS_P.ENTERO:
+        if exp_id.tipo_simbolo== TIPOS_Simbolos.ARRAY:
             
             temp = TS.getNextTemp(0)
             TS.inst += f'la {temp}, {expId.id}\n'
             TS.inst += f'lw {temp}, 0({temp})\n'
-        if exp_id.tipo == TIPOS_P.BOOLEAN:
+        elif exp_id.tipo== TIPOS_P.ENTERO:
+            
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp}, {expId.id}\n'
+            TS.inst += f'lw {temp}, 0({temp})\n'
+        elif exp_id.tipo == TIPOS_P.BOOLEAN:
             
             temp = TS.getNextTemp(0)
             TS.inst += f'la {temp}, {expId.id}\n'
             TS.inst += f'lb {temp}, 0({temp})\n'
-        if exp_id.tipo == TIPOS_P.CHAR:
+        elif exp_id.tipo == TIPOS_P.CHAR:
             
             temp = TS.getNextTemp(0)
             TS.inst += f'la {temp}, {expId.id}\n'
             TS.inst += f'lb {temp}, 0({temp})\n'
+
+        elif exp_id.tipo== TIPOS_P.CADENA:
+            
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp}, {expId.id}\n'
+            TS.inst += f'lw {temp}, 0({temp})\n'
     
     
     
@@ -518,6 +736,16 @@ def ejec_declaracion_explicita(inst,TS):
         print("Ya declarada variable "+inst.id)
         listaErrores.append(error("Ya declarada variable "+inst.id,0,0,"Semantico"))
         #return
+    
+    if inst.arrayList!=0:
+        if inst.tipo == TIPOS_P.ENTERO:
+            inst.tipo = TIPOS_P.ARRAY_INT
+        elif inst.tipo == TIPOS_P.CADENA:
+            inst.tipo = TIPOS_P.ARRAY_STRING
+        elif inst.tipo == TIPOS_P.CHAR:
+            inst.tipo = TIPOS_P.ARRAY_CHAR
+        elif inst.tipo == TIPOS_P.BOOLEAN:
+            inst.tipo = TIPOS_P.ARRAY_BOOLEAN
  
     if inst.tipo != tipo and exp!=None:
         print("Asignacion equivocada de tipos "+inst.id)
@@ -527,14 +755,33 @@ def ejec_declaracion_explicita(inst,TS):
     
     if len(PilaDisplay)!=0:
         RA_var = PilaDisplay[len(PilaDisplay)-1].RA
-        if tipo== TIPOS_P.ENTERO:
+
+        if inst.arrayList!=0:
+            PilaDisplay[len(PilaDisplay)-1].RA+=4
+        elif tipo== TIPOS_P.ENTERO:
             PilaDisplay[len(PilaDisplay)-1].RA+=4
         elif inst.tipo == TIPOS_P.BOOLEAN:
             PilaDisplay[len(PilaDisplay)-1].RA+=1
         elif inst.tipo == TIPOS_P.CHAR:
             PilaDisplay[len(PilaDisplay)-1].RA+=1
+        elif inst.tipo == TIPOS_P.CADENA:
+            PilaDisplay[len(PilaDisplay)-1].RA+=4
+
+
     else:
         RA_var =0
+
+    if tipo==None and inst.arrayList!=0:
+        if inst.tipo==TIPOS_P.ENTERO:
+            tipo = TIPOS_P.ARRAY_INT
+        elif inst.tipo==TIPOS_P.CADENA:
+            tipo = TIPOS_P.ARRAY_STRING
+        elif inst.tipo==TIPOS_P.CHAR:
+            tipo = TIPOS_P.ARRAY_CHAR
+        elif inst.tipo==TIPOS_P.BOOLEAN:
+            tipo = TIPOS_P.ARRAY_BOOLEAN  
+    else:
+        tipo = inst.tipo
 
     if inst.const == True:
         if exp==None:
@@ -542,18 +789,26 @@ def ejec_declaracion_explicita(inst,TS):
             listaErrores.append(error("No asigno valor a const "+inst.id,0,0,"Semantico"))
             return
         else:
-            simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.CONSTANTE,tipo=inst.tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
+            simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.CONSTANTE,tipo=tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
     elif inst.arrayList!=0:
-        simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.ARRAY,tipo=inst.tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
+        simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.ARRAY,tipo=tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
     else:
-        simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.VARIABLE,tipo=inst.tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
+        simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.VARIABLE,tipo=tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
         
     TS.agregar(simbolo)
     if TS.ambito=="Local":
         # addi sp,sp,-4 #creacion var
         # addi t1,x0,0
         # sw t1,0(sp)
-        if inst.tipo== TIPOS_P.ENTERO:
+
+        if inst.arrayList!=0:
+            TS.inst+= f'addi sp,sp,-4\n'
+           
+            TS.inst+= f'sw x0,0(sp)\n'
+            if exp!=None:
+               TS.inst+= f'sw {exp},0(sp)\n'
+
+        elif inst.tipo== TIPOS_P.ENTERO:
           
            TS.inst+= f'addi sp,sp,-4\n'
            
@@ -573,30 +828,52 @@ def ejec_declaracion_explicita(inst,TS):
             TS.inst+= f'sb x0,0(sp)\n'
             if exp!=None:
                 TS.inst+= f'sb {exp},0(sp)\n'
+        elif inst.tipo == TIPOS_P.CADENA:
+            TS.inst+= f'addi sp,sp,-4\n'
+           
+            TS.inst+= f'sw x0,0(sp)\n'
+            if exp!=None:
+               TS.inst+= f'sw {exp},0(sp)\n'
         TS.restoreTemp(cont)
     else:
 
-        if inst.tipo == TIPOS_P.ENTERO:
+        if inst.arrayList!=0:
             TS.Datos += f'{inst.id}: .word 0\n'
             if exp!= None:
                 cont+=1
                 temp = TS.getNextTemp(0)
                 TS.inst += f'la {temp},{inst.id}\n'
                 TS.inst += f'sw {exp},0({temp})\n'
-        if inst.tipo == TIPOS_P.BOOLEAN:
+
+        elif inst.tipo == TIPOS_P.ENTERO:
+            TS.Datos += f'{inst.id}: .word 0\n'
+            if exp!= None:
+                cont+=1
+                temp = TS.getNextTemp(0)
+                TS.inst += f'la {temp},{inst.id}\n'
+                TS.inst += f'sw {exp},0({temp})\n'
+        elif inst.tipo == TIPOS_P.BOOLEAN:
             TS.Datos += f'{inst.id}: .byte 1\n'
             if exp!= None:
                 cont+=1
                 temp = TS.getNextTemp(0)
                 TS.inst += f'la {temp},{inst.id}\n'
                 TS.inst += f'sb {exp},0({temp})\n'
-        if inst.tipo == TIPOS_P.CHAR:
+        elif inst.tipo == TIPOS_P.CHAR:
             TS.Datos += f'{inst.id}: .byte 0\n'
             if exp!= None:
                 cont+=1
                 temp = TS.getNextTemp(0)
                 TS.inst += f'la {temp},{inst.id}\n'
                 TS.inst += f'sb {exp},0({temp})\n'
+        elif inst.tipo == TIPOS_P.CADENA:
+            TS.Datos += f'{inst.id}: .word 0\n'
+            if exp!= None:
+                cont+=1
+                temp = TS.getNextTemp(0)
+                TS.inst += f'la {temp},{inst.id}\n'
+                TS.inst += f'sw {exp},0({temp})\n'
+       
     
         TS.restoreTemp(cont)
  #   TSReporte.agregar(copy.deepcopy(simbolo))
@@ -611,15 +888,29 @@ def ejec_declaracion_implicita(inst,TS):
     
     if len(PilaDisplay)!=0:
         RA_var = PilaDisplay[len(PilaDisplay)-1].RA
-        if tipo== TIPOS_P.ENTERO:
+        if tipo== TIPOS_P.ARRAY_INT:
             PilaDisplay[len(PilaDisplay)-1].RA+=4
-        elif inst.tipo == TIPOS_P.BOOLEAN:
+        elif tipo== TIPOS_P.ARRAY_CHAR:
+            PilaDisplay[len(PilaDisplay)-1].RA+=4
+        elif tipo== TIPOS_P.ARRAY_BOOLEAN:
+            PilaDisplay[len(PilaDisplay)-1].RA+=4
+        elif tipo== TIPOS_P.ARRAY_STRING:
+            PilaDisplay[len(PilaDisplay)-1].RA+=4
+        elif tipo== TIPOS_P.ENTERO:
+            PilaDisplay[len(PilaDisplay)-1].RA+=4
+        elif tipo == TIPOS_P.BOOLEAN:
             PilaDisplay[len(PilaDisplay)-1].RA+=1
-        elif inst.tipo == TIPOS_P.CHAR:
+        elif tipo == TIPOS_P.CHAR:
             PilaDisplay[len(PilaDisplay)-1].RA+=1
+        elif tipo == TIPOS_P.CADENA:
+            PilaDisplay[len(PilaDisplay)-1].RA+=4
     else:
         RA_var =0
 
+    if tipo==TIPOS_P.ARRAY_STRING or tipo==TIPOS_P.ARRAY_INT or tipo==TIPOS_P.ARRAY_CHAR or tipo==TIPOS_P.ARRAY_BOOLEAN:
+        tipoSimbolo = TIPOS_Simbolos.ARRAY
+    else:
+        tipoSimbolo = TIPOS_Simbolos.VARIABLE
     if inst.const == True:
         if exp==None:
             print("No asigno valor a const "+inst.id)
@@ -627,15 +918,26 @@ def ejec_declaracion_implicita(inst,TS):
             return
         else:
             simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.CONSTANTE,tipo=tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
+        
     else:
-        simbolo = Simbolos(id=inst.id,tipo_simbolo=TIPOS_Simbolos.VARIABLE,tipo=tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
+
+        simbolo = Simbolos(id=inst.id,tipo_simbolo=tipoSimbolo,tipo=tipo,valor=exp,ambito=TS.ambito,RA=RA_var,linea=inst.linea,columna=inst.columna)
+
+
     TS.agregar(simbolo)
 
     if TS.ambito=="Local":
         # addi sp,sp,-4 #creacion var
         # addi t1,x0,0
         # sw t1,0(sp)
-        if tipo== TIPOS_P.ENTERO:
+        if tipoSimbolo==TIPOS_Simbolos.ARRAY:
+            TS.inst+= f'addi sp,sp,-4\n'
+           
+            TS.inst+= f'sw x0,0(sp)\n'
+            if exp!=None:
+               TS.inst+= f'sw {exp},0(sp)\n'
+
+        elif tipo== TIPOS_P.ENTERO:
           
            TS.inst+= f'addi sp,sp,-4\n'
            
@@ -655,10 +957,24 @@ def ejec_declaracion_implicita(inst,TS):
             TS.inst+= f'sb x0,0(sp)\n'
             if exp!=None:
                 TS.inst+= f'sb {exp},0(sp)\n'
+        elif tipoSimbolo==TIPOS_P.CADENA:
+            TS.inst+= f'addi sp,sp,-4\n'
+           
+            TS.inst+= f'sw x0,0(sp)\n'
+            if exp!=None:
+               TS.inst+= f'sw {exp},0(sp)\n'
         TS.restoreTemp(cont)
     else:
 
-        if tipo== TIPOS_P.ENTERO:
+        if tipoSimbolo==TIPOS_Simbolos.ARRAY:
+            TS.Datos += f'{inst.id}: .word 0\n'
+            if exp!= None:
+                cont+=1
+                temp = TS.getNextTemp(0)
+                TS.inst += f'la {temp},{inst.id}\n'
+                TS.inst += f'sw {exp},0({temp})\n'
+
+        elif tipo== TIPOS_P.ENTERO:
             TS.Datos += f'{inst.id}: .word 0\n'
             if exp!= None:
                 cont+=1
@@ -679,6 +995,13 @@ def ejec_declaracion_implicita(inst,TS):
                 temp = TS.getNextTemp(0)
                 TS.inst += f'la {temp},{inst.id}\n'
                 TS.inst += f'sb {exp},0({temp})\n'
+        elif tipo == TIPOS_P.CADENA:
+            TS.Datos += f'{inst.id}: .word 0\n'
+            if exp!= None:
+                cont+=1
+                temp = TS.getNextTemp(0)
+                TS.inst += f'la {temp},{inst.id}\n'
+                TS.inst += f'sw {exp},0({temp})\n'
         
         TS.restoreTemp(cont)
     
@@ -714,6 +1037,10 @@ def ejec_Asignacion(inst,TS):
     if simbolo.ambito =="Local":
 
 #        sw t0,0(sp) # asignacion
+        if tipo== TIPOS_P.ARRAY_INT or tipo== TIPOS_P.ARRAY_STRING or tipo== TIPOS_P.ARRAY_CHAR or tipo== TIPOS_P.ARRAY_BOOLEAN:
+            
+            offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - simbolo.RA
+            TS.inst += f'sw {exp},{offset}(sp)\n'
         if tipo== TIPOS_P.ENTERO:
             
             offset = PilaDisplay[len(PilaDisplay)-1].RA -4 - simbolo.RA
@@ -730,18 +1057,22 @@ def ejec_Asignacion(inst,TS):
         TS.restoreTemp(1)
         
     else:
-
-        if tipo== TIPOS_P.ENTERO:
+        if tipo== TIPOS_P.ARRAY_INT or tipo== TIPOS_P.ARRAY_STRING or tipo== TIPOS_P.ARRAY_CHAR or tipo== TIPOS_P.ARRAY_BOOLEAN:
             
             temp = TS.getNextTemp(0)
             TS.inst += f'la {temp},{inst.id}\n'
             TS.inst += f'sw {exp},0({temp})\n'
-        if tipo == TIPOS_P.BOOLEAN:
+        elif tipo== TIPOS_P.ENTERO:
+            
+            temp = TS.getNextTemp(0)
+            TS.inst += f'la {temp},{inst.id}\n'
+            TS.inst += f'sw {exp},0({temp})\n'
+        elif tipo == TIPOS_P.BOOLEAN:
             
             temp = TS.getNextTemp(0)
             TS.inst += f'la {temp},{inst.id}\n'
             TS.inst += f'sb {exp},0({temp})\n'
-        if tipo == TIPOS_P.CHAR:
+        elif tipo == TIPOS_P.CHAR:
             
             temp = TS.getNextTemp(0)
             TS.inst += f'la {temp},{inst.id}\n'
@@ -1253,13 +1584,116 @@ def ejec_Funcion(inst,TS):
 	# addi sp,sp,4
     
 def resolver_expresionArray(exp,TS):
-    resultado = []
+
+    temp1 = TS.getNextTemp(0)
+    #temp2 = TS.getNextTemp(0)
+    TS.inst += f'addi a0,x0,{len(exp.valores)}\n'
+
+    if len(exp.valores)!=0:
+        if isinstance(exp.valores[0],ExpresionDobleComilla):
+            #que hacer si es string
+            TS.inst += f'addi {temp1},x0,4\n'
+            tipo = TIPOS_P.CADENA
+            i= 4
+        elif isinstance(exp.valores[0],ExpresionAritmetica):
+            #entero
+            TS.inst += f'addi {temp1},x0,4\n'
+            tipo = TIPOS_P.ENTERO
+            i=4
+        elif isinstance(exp.valores[0],ExpresionRelacional) or isinstance(exp.valores[0],ExpresionBoleana):
+            #Bool
+            TS.inst += f'addi {temp1},x0,1\n'
+            tipo = TIPOS_P.BOOLEAN
+            i=1
+        elif isinstance(exp.valores[0],ExpresionComillaSimple):
+            #Char
+            TS.inst += f'addi {temp1},x0,1\n'
+            tipo = TIPOS_P.CHAR
+            i=1
+
+    TS.inst += f'mul a0,a0,{temp1}\n'
+    TS.inst += f'addi a0,a0,4\n'
+    TS.inst += f'li a7,9\n'
+    TS.inst += f'ecall\n'  #alojar memoria heap
+
+    TS.inst += f'add {temp1},a0,x0\n' #direccion memoria
+
+    TS.inst += f'addi a0,x0,{len(exp.valores)}\n' 
+
+    TS.inst += f'sw a0, 0({temp1})\n' 
+
 
     for valor in exp.valores:
-        exp = ejec_expresion(valor,TS)
-        resultado.append(exp)
+        exp,tipoExp = ejec_expresion(valor,TS)
+        if tipo != tipoExp:
+            print("Tipos diferentes en Lista")
+            listaErrores.append(error("Tipos diferentes en Lista",0,0,"Semantico"))
+            return None,TIPOS_P.VOID
+        if tipo==TIPOS_P.ENTERO or tipo==TIPOS_P.CADENA:
+            #TS.inst += f'add a0,{exp},x0\n'
+            TS.inst += f'sw {exp}, {i}({temp1})\n'
+            i+=4
+            TS.restoreTemp(1)
+        else:
+            #TS.inst += f'add a0,{exp},x0\n'
+            TS.inst += f'sb {exp},{i}({temp1})\n'
+            i+=1
+            TS.restoreTemp(1)
 
-    return resultado
+    if tipo==TIPOS_P.BOOLEAN:
+        tipo= TIPOS_P.ARRAY_BOOLEAN
+    elif tipo==TIPOS_P.CHAR:
+        tipo= TIPOS_P.ARRAY_CHAR
+    elif tipo==TIPOS_P.CADENA:
+        tipo= TIPOS_P.ARRAY_STRING
+    elif tipo==TIPOS_P.ENTERO:
+        tipo= TIPOS_P.ARRAY_INT
+
+    return temp1,tipo
+
+
+            
+
+    # resultado = []
+
+    # for valor in exp.valores:
+    #     exp = ejec_expresion(valor,TS)
+    #     resultado.append(exp)
+
+    # return resultado
+
+    # addi a0,x0,4 #Cantidad elementos Array
+	
+	# addi a1,x0,4 #Tamano de entero
+	
+	# mul a0,a0,a1 #Tamano Array
+	
+	# addi a0,a0,4 #Tamano Array + 1 
+			
+	# li a7,9
+	# ecall
+	
+	# add t0,x0,a0  #Direccion memoria en temp
+	
+	# addi a0,x0,4
+	
+	# sw a0,0(t0) #Agrego ptr a header
+	
+	# addi a0,x0,8
+	
+	# sw a0, 4(t0) #Agrego elem 8
+	
+	# addi a0,x0,4
+	
+	# sw a0, 8(t0) #Agrego elem 4
+	
+	# addi a0,x0,6
+	
+	# sw a0, 12(t0) #Agrego elem 6
+	
+	# addi a0,x0,2
+	
+	# sw a0, 16(t0) #Agrego elem 2
 
 def ejec_AsignacionArray(inst,TS):
     exp = ejec_expresion(inst.valor,TS)

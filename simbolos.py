@@ -103,6 +103,11 @@ class TablaSimbolos():
     msgTrue: .asciz "True"
     msgFalselen: .word 5
     msgFalse: .asciz "False"
+
+    msgCorcheteAbre: .byte 91
+    msgCorcheteCierra: .byte 93
+    msgComa: .byte 44
+    
     .text
     .globl main
     main:
@@ -144,4 +149,157 @@ class TablaSimbolos():
 	ecall
     ret
 
+_print_Array_Int: #Argunmentos: t0=ptr Array, #Hacer push t0,t1,t2,t3 
+	la a0, msgCorcheteAbre
+	lb a0, 0(a0)
+	li a7,11
+	ecall
+
+	lw t1,0(t0) #Tamano array
+	
+	addi t2,x0,1 #iterador
+
+_print_Array_Int_Ciclo:
+	
+	blt t1,t2, _print_Array_Int_Final
+	
+	addi a0,x0,4
+	
+	mul a0,a0,t2
+	
+	
+	
+	add a0,a0,t0
+	
+	lw a0,0(a0)
+	
+	li a7,1
+	ecall
+	
+	
+	addi t2,t2,1
+	
+	la a0, msgComa
+	lb a0, 0(a0)
+	li a7,11
+	ecall
+	
+	j _print_Array_Int_Ciclo
+	
+_print_Array_Int_Final:
+
+	la a0, msgCorcheteCierra
+	lb a0, 0(a0)
+	li a7,11
+	ecall
+	ret 
+
+_print_Array_Char: #Argunmentos: t0=ptr Array, #Hacer push t0,t1,t2,t3 
+	la a0, msgCorcheteAbre
+	lb a0, 0(a0)
+	li a7,11
+	ecall
+
+	lw t1,0(t0) #Tamano array
+	
+	addi t2,x0,1 #iterador
+
+_print_Array_Char_Ciclo:
+	
+	blt t1,t2, _print_Array_Char_Final
+	
+	addi a0,x0,1
+	
+	mul a0,a0,t2
+	
+	
+	
+	add a0,a0,t0
+	
+	lb a0,0(a0)
+	
+	li a7,11
+	ecall
+	
+	
+	addi t2,t2,1
+	
+	la a0, msgComa
+	lb a0, 0(a0)
+	li a7,11
+	ecall
+	
+	j _print_Array_Char_Ciclo
+	
+_print_Array_Char_Final:
+
+	la a0, msgCorcheteCierra
+	lb a0, 0(a0)
+	li a7,11
+	ecall
+	ret 
+	
+_print_Array_Bool: #Argunmentos: t0=ptr Array, #Hacer push t0,t1,t2,t3 
+	la a0, msgCorcheteAbre
+	lb a0, 0(a0)
+	li a7,11
+	ecall
+
+	lw t1,0(t0) #Tamano array
+	
+	addi t2,x0,1 #iterador
+
+_print_Array_Bool_Ciclo:
+	
+	blt t1,t2, _print_Array_Bool_Final
+	
+	addi a0,x0,1
+	
+	mul a0,a0,t2
+	
+	
+	
+	add a0,a0,t0
+	
+	lb a0,0(a0)
+	
+	bnez a0, _print_Array_Bool_true
+	
+	addi sp,sp,-4
+	sw ra,0(sp)
+	call _print_false
+	lw ra,0(sp)
+	addi sp,sp,4
+	j _print_Array_Bool_continue
+	
+	
+_print_Array_Bool_true:
+	
+	addi sp,sp,-4
+	sw ra,0(sp)
+	call _print_true
+	lw ra,0(sp)
+	addi sp,sp,4
+	
+	#li a7,1
+	#ecall
+	
+_print_Array_Bool_continue:
+
+	addi t2,t2,1
+	
+	la a0, msgComa
+	lb a0, 0(a0)
+	li a7,11
+	ecall
+	
+	j _print_Array_Bool_Ciclo
+	
+_print_Array_Bool_Final:
+
+	la a0, msgCorcheteCierra
+	lb a0, 0(a0)
+	li a7,11
+	ecall
+	ret
     '''
