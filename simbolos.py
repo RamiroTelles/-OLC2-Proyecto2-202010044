@@ -77,6 +77,9 @@ class TablaSimbolos():
     def restoreTemp(self,num):
         self.temp -=num
 
+    def restartTemp(self):
+        self.temp=-1
+
 
         
 
@@ -99,6 +102,8 @@ class TablaSimbolos():
     BufferChar: .byte 0
 	msgErrorDivisionlen: .word 21
 	msgErrorDivision: .asciz "Error, division por 0"
+    msgErrorIndexOutofBoundslen: .word 41
+	msgErrorIndexOutofBounds: .asciz "Error, Acceso a array fuera de los limites"
     msgTruelen: .word 4
     msgTrue: .asciz "True"
     msgFalselen: .word 5
@@ -107,7 +112,7 @@ class TablaSimbolos():
     msgCorcheteAbre: .byte 91
     msgCorcheteCierra: .byte 93
     msgComa: .byte 44
-    
+
     .text
     .globl main
     main:
@@ -123,6 +128,16 @@ class TablaSimbolos():
 	
 	la a0, msgErrorDivisionlen
 	la a1, msgErrorDivision
+	lw a2, 0(a0)
+	li a0,1
+	li a7,64
+	ecall
+	j final
+
+    err_IndexOutofBOunds:
+	
+	la a0, msgErrorIndexOutofBoundslen
+	la a1, msgErrorIndexOutofBounds
 	lw a2, 0(a0)
 	li a0,1
 	li a7,64

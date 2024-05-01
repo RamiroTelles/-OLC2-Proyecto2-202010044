@@ -355,7 +355,36 @@ def ejec_Imprimir(inst,TS):
                                 addi sp,sp,16
                                 lw ra,0(sp)
                                 addi sp,sp,4\n'''
-        
+        elif isinstance(exp,Expresion_AccesoArray):
+            if tipo==TIPOS_P.ENTERO:
+                TS.inst += f''' add a0, {result},x0
+                            li a7, 1 
+                            ecall\n'''
+            elif tipo==TIPOS_P.CHAR:
+                TS.inst += f''' la a0, BufferChar
+                            sb {result}, 0(a0)
+                            la a1, BufferChar
+                            li a2, 1
+                            li a0, 1 
+                            li a7, 64 
+                            ecall\n'''
+            elif tipo==TIPOS_P.BOOLEAN:
+                label1 = TS.getNextLabel()
+                label2= TS.getNextLabel()
+                TS.inst += f''' beqz {result},L{label1}
+                                addi sp,sp,-4
+	                            sw ra, 0(sp)
+                                jal _print_true
+                                lw ra,0(sp)
+	                            addi sp,sp,4
+                                j L{label2}
+                            L{label1}:
+                                addi sp,sp,-4
+	                            sw ra, 0(sp)
+                                jal _print_false
+                                lw ra,0(sp)
+	                            addi sp,sp,4
+                            L{label2}:\n'''
         #Luego Escribe salto de linea
     TS.inst  += f'''la a1, msgSalto
                     li a2,1
@@ -373,6 +402,7 @@ def ejec_Imprimir(inst,TS):
         #     ts.salida += f'''la a0, {exp}
         #                     li a7, 1
         #                     ecall\n'''
+    TS.restartTemp()
     
     
 
@@ -1722,19 +1752,78 @@ def ejec_AsignacionArray(inst,TS):
 
 def resolver_expresion_AccesoArray(exp,TS):
     simbolo =  TS.obtener(exp.id)
-    index = ejec_expresion(exp.indice,TS)
-    if simbolo== None:
-        listaErrores.append(error("Se quiere usar valor null con variable "+simbolo.id,0,0,"Semantico"))
-        print("Se quiere usar valor null con variable "+simbolo.id)
-        return
+    index,tipoIndex = ejec_expresion(exp.indice,TS)
+
+    TS.inst+= f'addi {index},{index},1\n'
+
+    TS.inst+= f'blez {index},err_IndexOutofBOunds\n'
+
+    TS.inst+= f'la a1,{exp.id}\n'
+    TS.inst+= f'lw a1,0(a1)\n'
+
+    TS.inst+= f'lw a0, 0(a1)\n'
+
+    TS.inst+= f'bgt {index},a0,err_IndexOutofBOunds\n'
+
+    if simbolo.tipo == TIPOS_P.ARRAY_INT:
+        TS.inst+= f'addi a0,x0,4\n'
+        tipo = TIPOS_P.ENTERO
+    elif simbolo.tipo == TIPOS_P.ARRAY_STRING:
+        TS.inst+= f'addi a0,x0,4\n'
+        tipo = TIPOS_P.CADENA
+    elif simbolo.tipo == TIPOS_P.ARRAY_CHAR:
+        TS.inst+= f'addi a0,x0,1\n'
+        tipo = TIPOS_P.CHAR
+    elif simbolo.tipo == TIPOS_P.ARRAY_BOOLEAN:
+        TS.inst+= f'addi a0,x0,1\n'
+        tipo = TIPOS_P.BOOLEAN
+
+    TS.inst+= f'mul a0,a0,{index}\n'
+
+    TS.inst+= f'add a1,a1,a0\n'
+
+    TS.inst+= f'lw a1,0(a1)\n'
+
+    TS.inst+= f'add {index},a1,x0\n'
+
+    return index,tipo
+
+
+    # addi t0,x0,-55 #Obtener indice
+	# addi t0,t0,1 #Corregir indice
+	
+	# blez t0,err_IndexOutofBOunds #Comprobacion out of bounds
+
+	# la t1,arr1
+	# lw t1,0(t1) #Se obtiene puntero
+	
+	# lw a0, 0(t1)  #Se obtiene ptrheader
+	
+	# bgt t0,a0,err_IndexOutofBOunds #Comprobacion out of bounds
+	
+	# addi a0,x0,4 #tamano de tipo
+	
+	# mul a0,a0,t0 #mapeo lexicografico
+	
+	# add t1,t1,a0 # ptr a valor
+	
+	# lw t1,0(t1) #obtencion valor
+
+
+    # simbolo =  TS.obtener(exp.id)
+    # index = ejec_expresion(exp.indice,TS)
+    # if simbolo== None:
+    #     listaErrores.append(error("Se quiere usar valor null con variable "+simbolo.id,0,0,"Semantico"))
+    #     print("Se quiere usar valor null con variable "+simbolo.id)
+    #     return
     
-    try:
-        valor = copy.deepcopy(simbolo.valor[index])
-    except:
-        print("Error al acceder al valor de Array "+exp.id)
-        listaErrores.append(error("Error al acceder al valor de Array "+exp.id,0,0,"Semantico"))
-        return
-    return valor
+    # try:
+    #     valor = copy.deepcopy(simbolo.valor[index])
+    # except:
+    #     print("Error al acceder al valor de Array "+exp.id)
+    #     listaErrores.append(error("Error al acceder al valor de Array "+exp.id,0,0,"Semantico"))
+    #     return
+    # return valor
 
 def ejec_FuncionPush(inst,TS):
     simbolo = TS.obtener(inst.id)
